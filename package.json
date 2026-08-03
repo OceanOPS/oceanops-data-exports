@@ -1,0 +1,17 @@
+{
+  "name": "oceanops-data-exports",
+  "private": true,
+  "version": "1.0.0",
+  "description": "OceanOPS Report / globe static data exports (partner counts, GeoJSON layers)",
+  "type": "module",
+  "scripts": {
+    "export:partners": "node export-partner-countries.mjs",
+    "export:partners:dry-run": "node export-partner-countries.mjs --dry-run",
+    "export:geojson": "node export-geojson.mjs",
+    "export:geojson:dry-run": "node export-geojson.mjs --dry-run",
+    "export:all": "npm run export:partners && npm run export:geojson"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
