@@ -6,9 +6,11 @@
  *   node export-geojson.mjs [--dry-run] [--layer=argo] [--no-densify]
  *       [--no-country-ship] [--no-country-sensor]
  *
- * Output: ../oceanops-simple-map/public/geojson/{layerId}.geojson
+ * Output: {geojson-dir}/{layerId}.geojson (default: simple-map public/geojson)
  *
  * Environment: OCEANOPS_DATABASE_URL, GEOJSON_EXPORT_EDITION
+ *   OCEANOPS_SIMPLE_MAP_ROOT, GEOJSON_OUTPUT_DIR
+ * Options: --simple-map-root=, --geojson-dir=
  * Edit geojson-export/exportConfig.mjs before each edition.
  */
 
@@ -25,14 +27,14 @@ import {
   printExportSummary,
 } from './geojson-export/exportConfig.mjs'
 import {
-  GEOJSON_OUTPUT_DIR,
-  SIMPLE_MAP_ROOT,
-  assertAppRepo,
+  assertGeojsonExportTargets,
+  resolveExportPaths,
 } from './paths.mjs'
 
-const OUTPUT_DIR = GEOJSON_OUTPUT_DIR
-
 const args = process.argv.slice(2)
+const exportPaths = resolveExportPaths(args)
+const OUTPUT_DIR = exportPaths.GEOJSON_OUTPUT_DIR
+const SIMPLE_MAP_ROOT = exportPaths.SIMPLE_MAP_ROOT
 const dryRun = args.includes('--dry-run')
 const noDensify = args.includes('--no-densify')
 const includeCountryShip = !args.includes('--no-country-ship')
@@ -113,7 +115,7 @@ async function exportLayer(layerId, config) {
 }
 
 async function main() {
-  assertAppRepo(SIMPLE_MAP_ROOT, 'oceanops-simple-map')
+  assertGeojsonExportTargets(exportPaths)
 
   if (!assertPsqlAvailable()) {
     throw new Error('psql is required but was not found on PATH')

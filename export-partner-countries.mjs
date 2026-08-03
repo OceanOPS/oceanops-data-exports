@@ -4,13 +4,16 @@
  *
  * Usage:
  *   node export-partner-countries.mjs [--source=api|arcgis|auto] [--dry-run]
+ *       [--report-card-root=PATH] [--simple-map-root=PATH]
+ *       [--partner-ts=PATH] [--partner-json=PATH]
  *
- * Outputs:
- *   ../oceanops-report-card/src/data/partnerCountries.ts
- *   ../oceanops-simple-map/public/data/partnerCountries.json
+ * Outputs (default: sibling app repos — see paths.mjs):
+ *   partnerCountries.ts, partnerCountries.json
  *
  * Environment:
  *   OCEANOPS_API_URL, OCEANOPS_DATABASE_URL, PARTNER_EXPORT_EDITION
+ *   OCEANOPS_REPORT_CARD_ROOT, OCEANOPS_SIMPLE_MAP_ROOT
+ *   PARTNER_COUNTRIES_TS, PARTNER_COUNTRIES_JSON
  *
  * Edit partner-export/exportConfig.mjs before each edition.
  */
@@ -44,21 +47,18 @@ import {
   ISO_COUNTRY_NAMES,
 } from './partner-export/countryMeta.mjs'
 import {
-  PARTNER_COUNTRIES_JSON,
-  PARTNER_COUNTRIES_TS,
-  assertAppRepo,
-  REPORT_CARD_ROOT,
-  SIMPLE_MAP_ROOT,
+  assertPartnerExportTargets,
+  resolveExportPaths,
 } from './paths.mjs'
 import {
   buildGeoCountryIndex,
   geoNamesForIso,
 } from './geoCountryNames.mjs'
 
-const OUTPUT = PARTNER_COUNTRIES_TS
-const OUTPUT_JSON = PARTNER_COUNTRIES_JSON
-
 const args = process.argv.slice(2)
+const exportPaths = resolveExportPaths(args)
+const OUTPUT = exportPaths.PARTNER_COUNTRIES_TS
+const OUTPUT_JSON = exportPaths.PARTNER_COUNTRIES_JSON
 const dryRun = args.includes('--dry-run')
 const sourceArg = args.find((a) => a.startsWith('--source='))?.split('=')[1] ?? 'auto'
 
@@ -455,8 +455,7 @@ async function detectSource(requested) {
 }
 
 async function main() {
-  assertAppRepo(REPORT_CARD_ROOT, 'oceanops-report-card')
-  assertAppRepo(SIMPLE_MAP_ROOT, 'oceanops-simple-map')
+  assertPartnerExportTargets(exportPaths)
 
   const source = await detectSource(sourceArg)
   process.stderr.write(`Exporting partner counts via ${source}…\n`)

@@ -16,7 +16,30 @@ OceanOPS/
   oceanops-simple-map/
 ```
 
-Output paths are defined in `paths.mjs` (sibling folders).
+Output paths default to sibling folders (`paths.mjs`). Override when your clones live elsewhere:
+
+| Variable | CLI flag | Default file / folder |
+|----------|----------|------------------------|
+| `OCEANOPS_REPORT_CARD_ROOT` | `--report-card-root=` | `src/data/partnerCountries.ts` |
+| `OCEANOPS_SIMPLE_MAP_ROOT` | `--simple-map-root=` | `public/data/partnerCountries.json`, `public/geojson/` |
+| `PARTNER_COUNTRIES_TS` | `--partner-ts=` | full path to `.ts` |
+| `PARTNER_COUNTRIES_JSON` | `--partner-json=` | full path to `.json` |
+| `GEOJSON_OUTPUT_DIR` | `--geojson-dir=` | GeoJSON output directory |
+
+Examples:
+
+```bash
+# Different parent folder names
+OCEANOPS_REPORT_CARD_ROOT=~/work/report-card \
+OCEANOPS_SIMPLE_MAP_ROOT=~/work/simple-map \
+npm run export:partners
+
+# Write only the map JSON (skip report-card repo check)
+npm run export:partners -- --partner-json=/path/to/oceanops-simple-map/public/data/partnerCountries.json
+
+# GeoJSON to a custom directory
+npm run export:geojson -- --geojson-dir=/path/to/public/geojson
+```
 
 ## Commands
 
