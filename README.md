@@ -21,7 +21,7 @@ Output paths default to sibling folders (`paths.mjs`). Override when your clones
 | Variable | CLI flag | Default file / folder |
 |----------|----------|------------------------|
 | `OCEANOPS_REPORT_CARD_ROOT` | `--report-card-root=` | `src/data/partnerCountries.ts` |
-| `OCEANOPS_SIMPLE_MAP_ROOT` | `--simple-map-root=` | `public/data/partnerCountries.json`, `public/geojson/` |
+| `OCEANOPS_SIMPLE_MAP_ROOT` | `--simple-map-root=` | `src/data/partnerCountries.json`, `public/geojson/` |
 | `PARTNER_COUNTRIES_TS` | `--partner-ts=` | full path to `.ts` |
 | `PARTNER_COUNTRIES_JSON` | `--partner-json=` | full path to `.json` |
 | `GEOJSON_OUTPUT_DIR` | `--geojson-dir=` | GeoJSON output directory |
@@ -35,7 +35,7 @@ OCEANOPS_SIMPLE_MAP_ROOT=~/work/simple-map \
 npm run export:partners
 
 # Write only the map JSON (skip report-card repo check)
-npm run export:partners -- --partner-json=/path/to/oceanops-simple-map/public/data/partnerCountries.json
+npm run export:partners -- --partner-json=/path/to/oceanops-simple-map/src/data/partnerCountries.json
 
 # GeoJSON to a custom directory
 npm run export:geojson -- --geojson-dir=/path/to/public/geojson
@@ -53,7 +53,7 @@ npm run export:geojson -- --geojson-dir=/path/to/public/geojson
 ## Partner export outputs
 
 1. **`../oceanops-report-card/src/data/partnerCountries.ts`** — report card (until “View full list” is removed).
-2. **`../oceanops-simple-map/public/data/partnerCountries.json`** — globe country metrics (`byGeoCountryName` maps `CANADA` → `CA`, etc.).
+2. **`../oceanops-simple-map/src/data/partnerCountries.json`** — globe country metrics (`byGeoCountryName` maps `CANADA` → `CA`, etc.).
 
 Configure edition criteria in:
 

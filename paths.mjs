@@ -69,7 +69,7 @@ export function resolveExportPaths(argv = []) {
     partnerTsRaw ?? path.join(REPORT_CARD_ROOT, 'src/data/partnerCountries.ts'),
   )
   const PARTNER_COUNTRIES_JSON = path.resolve(
-    partnerJsonRaw ?? path.join(SIMPLE_MAP_ROOT, 'public/data/partnerCountries.json'),
+    partnerJsonRaw ?? path.join(SIMPLE_MAP_ROOT, 'src/data/partnerCountries.json'),
   )
   const GEOJSON_OUTPUT_DIR = path.resolve(
     geojsonDirRaw ?? path.join(SIMPLE_MAP_ROOT, 'public/geojson'),
