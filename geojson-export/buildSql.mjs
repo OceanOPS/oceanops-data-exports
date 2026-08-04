@@ -34,7 +34,13 @@ export function buildPointLayerSql(config, options = {}) {
 
   if (includeCountryShip) {
     joins.push('LEFT JOIN oceanops.v_ptf_depl_rv rv ON t.ptf_id = rv.ptf_id')
-    propertyEntries.push(`'country_ship', rv.ship_country`)
+    joins.push('LEFT JOIN oceanops.ptf ptf ON t.ptf_id = ptf.id')
+    joins.push('LEFT JOIN oceanops.ptf_deployment pd ON pd.id = ptf.ptf_depl_id')
+    joins.push('LEFT JOIN oceanops.ship sh ON sh.id = pd.ship_id')
+    joins.push('LEFT JOIN oceanops.country depl_ship_ctry ON depl_ship_ctry.id = sh.country_id')
+    propertyEntries.push(
+      `'country_ship', COALESCE(rv.ship_country, depl_ship_ctry.name_short)`
+    )
   }
 
   if (includeCountrySensorProvider) {

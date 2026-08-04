@@ -16,7 +16,7 @@
  * @property {string} category GeoJSON `properties.category` (must match existing layers)
  * @property {string} whereClause SQL predicate on `t` (oceanops_gis.ptf_loc_n)
  * @property {string} [summary] Human-readable criteria for export log
- * @property {boolean} [includeCountryShip] Export country_ship from v_ptf_depl_rv
+ * @property {boolean} [includeCountryShip] Export country_ship (v_ptf_depl_rv, fallback deployment ship on ptf)
  * @property {boolean} [includeCountrySensorProvider] Export country_sensor_provider
  */
 
