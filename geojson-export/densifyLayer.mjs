@@ -1,5 +1,6 @@
 /**
- * Densify line GeoJSON for 3D globe display (same logic as densify.js).
+ * Densify line GeoJSON for 3D globe display.
+ * Used by export-geojson.mjs and densify-geojson.mjs (single implementation).
  */
 
 import * as turf from '@turf/turf'
@@ -9,7 +10,7 @@ import * as turf from '@turf/turf'
  * @param {[number, number]} b
  * @param {{ mode?: 'geodesic' | 'rhumb', stepKm?: number }} [options]
  */
-function densifyPair(a, b, { mode = 'geodesic', stepKm = 100 } = {}) {
+function densifyPair(a, b, { mode = 'rhumb', stepKm = 100 } = {}) {
   if (mode === 'geodesic') {
     const dist = turf.distance(a, b, { units: 'kilometers' })
     const n = Math.max(0, Math.ceil(dist / stepKm) - 1)
@@ -48,7 +49,9 @@ function densifyLineString(coords, options) {
  * @returns {import('geojson').FeatureCollection}
  */
 export function densifyFeatureCollection(collection, options = {}) {
-  const mode = options.mode ?? 'geodesic'
+  // Rhumb (loxodrome) matches ship transects and legacy densify.js; geodesic arcs
+  // bulge toward the pole and cut over Antarctica on long east–west segments.
+  const mode = options.mode ?? 'rhumb'
   const stepKm = options.stepKm ?? 80
   const out = { type: 'FeatureCollection', features: [] }
 

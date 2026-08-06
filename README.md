@@ -82,6 +82,14 @@ Configure layers in `geojson-export/exportConfig.mjs`.
 
 Options: `--dry-run`, `--layer=argo`, `--no-densify`, `--no-country-ship`, `--no-country-sensor`
 
+Line densification (manual, after editing `*_undensified.geojson` in simple-map):
+
+```bash
+npm run densify:geojson -- ../oceanops-simple-map/public/geojson/goship_undensified.geojson ../oceanops-simple-map/public/geojson/goship.geojson
+```
+
+Optional 3rd/4th args: `rhumb` (default) or `geodesic`, then `stepKm` (default 80). Implementation: `geojson-export/densifyLayer.mjs`.
+
 ## From app repos
 
 ```bash
