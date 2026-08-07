@@ -47,7 +47,8 @@ npm run export:geojson -- --geojson-dir=/path/to/public/geojson
 |--------|-------------|
 | `npm run export:partners` | Partner counts → report-card TS + simple-map JSON |
 | `npm run export:geojson` | Map layers → `oceanops-simple-map/public/geojson/` |
-| `npm run export:all` | Both exports |
+| `npm run export:all` | Both exports + one combined summary (counts, filters for map + partners) |
+| `npm run render:sql -- <file\|all\|geojson\|partners>` | Print SQL with edition values (pgAdmin) |
 | `*:dry-run` | Print SQL or preview without writing files |
 
 ## Partner export outputs
@@ -55,32 +56,48 @@ npm run export:geojson -- --geojson-dir=/path/to/public/geojson
 1. **`../oceanops-report-card/src/data/partnerCountries.ts`** — report card (until “View full list” is removed).
 2. **`../oceanops-simple-map/src/data/partnerCountries.json`** — globe country metrics (`byGeoCountryName` maps `CANADA` → `CA`, etc.).
 
-Configure edition criteria in:
+Configure edition **values** in **`edition.values.json`** (dates, line lists).  
+Configure **filters and queries** in **`geojson-export/sql/*.sql`** (`-- @where`, `-- @geojson`, `-- @partner` + `{{tokens}}`).
 
-- `partner-export/exportConfig.mjs` — GO-SHIP / SOT line lists, summary notes
 - `partner-export/countryMeta.mjs` — EU and other editorial country metadata
 - `geoCountryNames.mjs` — ISO ↔ GeoJSON `country_name` for the map
 
+### Environment (shared)
+
+Both exports use the same database settings:
+
+- `OCEANOPS_DATABASE_URL` — Postgres (**required**; `psql` on PATH)
+- Optional: copy `.env.example` → `.env` in this repo (loaded automatically)
+- Edition label: `OCEANOPS_EXPORT_EDITION` (or `PARTNER_EXPORT_EDITION` / `GEOJSON_EXPORT_EDITION`)
+
+**Important:** assign the URL on the **same command** as npm, or `export` it first — otherwise only the first script in `export:all` may see it:
+
+```bash
+export OCEANOPS_DATABASE_URL='postgresql://...'
+export OCEANOPS_EXPORT_EDITION=isival-test
+npm run export:all
+```
+
 ### Environment (partners)
 
-- `OCEANOPS_API_URL` — default `http://localhost:8080/data`
-- `OCEANOPS_DATABASE_URL` — Postgres for GO-SHIP, SOT, platform-location counts
-- `PARTNER_EXPORT_EDITION` — label in export summary
+- `PARTNER_EXPORT_EDITION` — alias for edition label if `OCEANOPS_EXPORT_EDITION` unset
 
-Options: `--source=api|arcgis|auto` (default `auto`), `--dry-run`
+Options: `--dry-run`
 
 ## GeoJSON export
 
 Writes **`../oceanops-simple-map/public/geojson/{layerId}.geojson`**.
 
-Configure layers in `geojson-export/exportConfig.mjs`.
+1. Edit **`edition.values.json`** and SQL files under **`geojson-export/sql/`**.
+2. `npm run export:geojson`
 
 ### Environment (GeoJSON)
 
-- `OCEANOPS_DATABASE_URL` — Postgres (requires `psql` on PATH)
-- `GEOJSON_EXPORT_EDITION` — label in summary
+Uses the same `OCEANOPS_DATABASE_URL` as partner export (see above).
 
-Options: `--dry-run`, `--layer=argo`, `--no-densify`, `--no-country-ship`, `--no-country-sensor`
+- `GEOJSON_EXPORT_EDITION` — alias for edition label if `OCEANOPS_EXPORT_EDITION` unset
+
+Options: `--dry-run`, `--layer=argo`, `--no-densify`
 
 Line densification (manual, after editing `*_undensified.geojson` in simple-map):
 
@@ -99,6 +116,6 @@ npm run export:geojson    # in oceanops-simple-map
 
 ## Release checklist
 
-1. Update both `exportConfig.mjs` files for the edition.
+1. Update `edition.values.json` and `geojson-export/sql/*.sql` for the edition.
 2. From this folder: `npm run export:all`
 3. Commit generated artifacts in report-card and simple-map as needed.

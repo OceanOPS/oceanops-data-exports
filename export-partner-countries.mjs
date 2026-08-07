@@ -1,45 +1,27 @@
 #!/usr/bin/env node
 /**
- * Export partner country platform counts from OceanOPS.
+ * Export partner country platform counts from OceanOPS PostgreSQL.
  *
  * Usage:
- *   node export-partner-countries.mjs [--source=api|arcgis|auto] [--dry-run]
+ *   node export-partner-countries.mjs [--dry-run] [--no-summary]
  *       [--report-card-root=PATH] [--simple-map-root=PATH]
  *       [--partner-ts=PATH] [--partner-json=PATH]
  *
- * Outputs (default: sibling app repos — see paths.mjs):
- *   partnerCountries.ts, partnerCountries.json
- *
- * Environment:
- *   OCEANOPS_API_URL, OCEANOPS_DATABASE_URL, PARTNER_EXPORT_EDITION
- *   OCEANOPS_REPORT_CARD_ROOT, OCEANOPS_SIMPLE_MAP_ROOT
- *   PARTNER_COUNTRIES_TS, PARTNER_COUNTRIES_JSON
- *
- * Edit partner-export/exportConfig.mjs before each edition.
+ * Requires: psql, OCEANOPS_DATABASE_URL (prod or full local dump with GIS + line_program).
+ * Edition criteria: geojson-export/sql/*.sql (same as map GeoJSON export).
  */
 
 import fs from 'node:fs'
 import path from 'node:path'
-import {
-  API_MERGED_NETWORK_FILTERS,
-  API_NETWORK_FILTERS,
-  ARCGIS_LAYER_URL,
-  ARCGIS_NETWORK_FILTERS,
-  LINE_NETWORK_KEYS,
-  NETWORK_KEYS,
-  PLATFORM_NETWORK_KEYS,
-} from './partner-export/networkFilters.mjs'
-import { fetchGoShipCountsByCountry } from './partner-export/goShipLines.mjs'
-import { fetchLineNetworkCountsFromDatabase } from './partner-export/lineProgramCounts.mjs'
-import {
-  fetchPlatformLocationCountsFromDatabase,
-  PLATFORM_LOCATION_NETWORK_KEYS,
-  totalCountryCounts,
-} from './partner-export/platformLocationCounts.mjs'
+import { fileURLToPath } from 'node:url'
+import { formatDatabaseUrlForLog, loadDotEnv } from './databaseUrl.mjs'
+import { assertPsqlAvailable } from './geojson-export/db.mjs'
+
+loadDotEnv()
+import { LINE_NETWORK_KEYS, NETWORK_KEYS } from './partner-export/networkFilters.mjs'
+import { fetchPartnerCountsByCountryOrThrow } from './partner-export/runPartnerSql.mjs'
 import {
   EXPORT_EDITION_LABEL,
-  GO_SHIP_SELECTED_LINE_NAMES,
-  SOT_SELECTED_LINE_NAMES,
   printExportCriteriaSummary,
 } from './partner-export/exportConfig.mjs'
 import {
@@ -54,13 +36,6 @@ import {
   buildGeoCountryIndex,
   geoNamesForIso,
 } from './geoCountryNames.mjs'
-
-const args = process.argv.slice(2)
-const exportPaths = resolveExportPaths(args)
-const OUTPUT = exportPaths.PARTNER_COUNTRIES_TS
-const OUTPUT_JSON = exportPaths.PARTNER_COUNTRIES_JSON
-const dryRun = args.includes('--dry-run')
-const sourceArg = args.find((a) => a.startsWith('--source='))?.split('=')[1] ?? 'auto'
 
 /** @param {Record<string, Record<string, number>>} byNetwork */
 function mergeCountryCounts(byNetwork) {
@@ -81,215 +56,19 @@ function mergeCountryCounts(byNetwork) {
   return countries
 }
 
-/** @param {string} url */
-async function fetchJson(url, init) {
-  const res = await fetch(url, init)
-  if (!res.ok) {
-    const body = await res.text()
-    throw new Error(`${res.status} ${res.statusText}: ${body.slice(0, 200)}`)
-  }
-  return res.json()
-}
-
-/** @param {string} baseUrl @param {string} exp */
-async function fetchApiCountsByCountryMapBy(baseUrl, exp) {
-  try {
-    const params = new URLSearchParams({
-      exp: JSON.stringify([exp]),
-      include: JSON.stringify(['ref', 'program.country.code2']),
-      mapBy: 'program.country.code2',
-      limit: '0',
-    })
-
-    const payload = await fetchJson(`${baseUrl.replace(/\/$/, '')}/platform/?${params}`)
-    if (payload.message?.includes('Null mapBy value')) {
-      return null
-    }
-
-    /** @type {Record<string, number>} */
-    const counts = {}
-    for (const [code, platforms] of Object.entries(payload.data ?? {})) {
-      if (!code || code === 'null') continue
-      counts[code] = Array.isArray(platforms) ? platforms.length : 0
-    }
-    return counts
-  } catch (err) {
-    if (String(err).includes('Null mapBy value')) return null
-    throw err
-  }
-}
-
-/** @param {string} baseUrl @param {string} exp */
-async function fetchApiCountsByCountryPaginated(baseUrl, exp) {
-  /** @type {Record<string, number>} */
-  const counts = {}
-  /** @type {Set<string>} */
-  const seen = new Set()
-  const limit = 500
-  let offset = 0
-  let total = Infinity
-
-  while (offset < total) {
-    const params = new URLSearchParams({
-      exp: JSON.stringify([exp]),
-      include: JSON.stringify(['ref', 'program.country.code2']),
-      limit: String(limit),
-      offset: String(offset),
-    })
-
-    const payload = await fetchJson(`${baseUrl.replace(/\/$/, '')}/platform/?${params}`)
-    total = payload.total ?? 0
-
-    for (const platform of payload.data ?? []) {
-      const ref = platform.ref
-      if (!ref || seen.has(ref)) continue
-      seen.add(ref)
-
-      const code = platform.program?.country?.code2
-      if (!code) continue
-      counts[code] = (counts[code] ?? 0) + 1
-    }
-
-    if (!payload.data?.length) break
-    offset += payload.data.length
-  }
-
-  return counts
-}
-
-/** @param {string} baseUrl @param {string} exp */
-async function fetchApiCountsByCountry(baseUrl, exp) {
-  const mapByCounts = await fetchApiCountsByCountryMapBy(baseUrl, exp)
-  if (mapByCounts) return mapByCounts
-  return fetchApiCountsByCountryPaginated(baseUrl, exp)
-}
-
-/** @param {string} where */
-async function fetchArcgisCountsByCountry(where) {
-  const params = new URLSearchParams({
-    where,
-    groupByFieldsForStatistics: 'country_iso_code2',
-    outStatistics: JSON.stringify([
-      {
-        statisticType: 'count',
-        onStatisticField: 'objectid',
-        outStatisticFieldName: 'platform_count',
-      },
-    ]),
-    f: 'json',
-  })
-
-  const payload = await fetchJson(`${ARCGIS_LAYER_URL}/query`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params.toString(),
-  })
-
-  if (payload.error) {
-    throw new Error(payload.error.message || JSON.stringify(payload.error))
-  }
-
-  /** @type {Record<string, number>} */
-  const counts = {}
-  for (const feature of payload.features ?? []) {
-    const code = feature.attributes?.country_iso_code2
-    const count = feature.attributes?.platform_count ?? 0
-    if (!code) continue
-    counts[code] = count
-  }
-  return counts
-}
-
-/** @param {string} baseUrl @param {string[]} exps */
-async function fetchApiCountsByCountryMerged(baseUrl, exps) {
-  /** @type {Record<string, number>} */
-  const counts = {}
-
-  for (const exp of exps) {
-    const batch = await fetchApiCountsByCountry(baseUrl, exp)
-    for (const [code, count] of Object.entries(batch)) {
-      counts[code] = (counts[code] ?? 0) + count
-    }
-  }
-
-  return counts
-}
-
-/** @param {string} networkKey @returns {Promise<Record<string, number>>} */
-async function fetchLineNetworkCounts(networkKey) {
-  if (networkKey === 'goShip') {
-    return fetchGoShipCountsByCountry()
-  }
-
-  process.stderr.write(`  ${networkKey}… `)
-  const dbCounts = fetchLineNetworkCountsFromDatabase(networkKey)
-  if (dbCounts && Object.keys(dbCounts).length > 0) {
-    const total = Object.values(dbCounts).reduce((a, b) => a + b, 0)
-    process.stderr.write(`${total}\n`)
-    return dbCounts
-  }
-
-  process.stderr.write(
-    dbCounts
-      ? '0 (no line_program rows — set OCEANOPS_DATABASE_URL)\n'
-      : '0 (database unavailable)\n',
-  )
-  return {}
-}
-
-/** @param {'api'|'arcgis'} source */
-async function exportCounts(source) {
+function exportCountsFromDatabase() {
   /** @type {Record<string, Record<string, number>>} */
   const byNetwork = {}
-  const apiUrl = process.env.OCEANOPS_API_URL ?? 'http://localhost:8080/data'
 
-  for (const networkKey of PLATFORM_NETWORK_KEYS) {
+  for (const networkKey of NETWORK_KEYS) {
     process.stderr.write(`  ${networkKey}… `)
-
-    if (source === 'api') {
-      if (PLATFORM_LOCATION_NETWORK_KEYS.includes(networkKey)) {
-        const dbCounts = fetchPlatformLocationCountsFromDatabase(networkKey)
-        const dbTotal = totalCountryCounts(dbCounts)
-        if (dbCounts !== null && dbTotal > 0) {
-          byNetwork[networkKey] = dbCounts
-          process.stderr.write('postgres+date ')
-        } else {
-          if (dbCounts !== null && dbTotal === 0) {
-            process.stderr.write('no DB date rows — API status-only ')
-          }
-          const mergedFilters = API_MERGED_NETWORK_FILTERS[networkKey]
-          byNetwork[networkKey] = await fetchApiCountsByCountryMerged(apiUrl, mergedFilters)
-        }
-      } else {
-        const mergedFilters = API_MERGED_NETWORK_FILTERS[networkKey]
-        if (mergedFilters) {
-          byNetwork[networkKey] = await fetchApiCountsByCountryMerged(apiUrl, mergedFilters)
-        } else {
-          const exp = API_NETWORK_FILTERS[networkKey]
-          byNetwork[networkKey] = await fetchApiCountsByCountry(apiUrl, exp)
-        }
-      }
-    } else {
-      const where = ARCGIS_NETWORK_FILTERS[networkKey]
-      byNetwork[networkKey] = await fetchArcgisCountsByCountry(where)
-    }
-
+    byNetwork[networkKey] = fetchPartnerCountsByCountryOrThrow(networkKey)
     const total = Object.values(byNetwork[networkKey]).reduce((a, b) => a + b, 0)
-    process.stderr.write(`${total}\n`)
-  }
-
-  for (const networkKey of LINE_NETWORK_KEYS) {
-    if (networkKey === 'goShip') {
-      process.stderr.write('  goShip… ')
-      byNetwork.goShip = await fetchGoShipCountsByCountry()
-      const goShipTotal = Object.values(byNetwork.goShip).reduce((a, b) => a + b, 0)
-      if (goShipTotal > 0) {
-        process.stderr.write(`${goShipTotal}\n`)
-      }
-      continue
+    if (total === 0 && LINE_NETWORK_KEYS.includes(networkKey)) {
+      process.stderr.write('0 (no line_program rows for selected design lines on this DB)\n')
+    } else {
+      process.stderr.write(`${total}\n`)
     }
-
-    byNetwork[networkKey] = await fetchLineNetworkCounts(networkKey)
   }
 
   return byNetwork
@@ -359,9 +138,7 @@ function renderPartnerCountries(countries, meta) {
  * AUTO-GENERATED by oceanops-data-exports/export-partner-countries.mjs — do not edit counts by hand.
  * Regenerate: npm run export:partners (from oceanops-data-exports or oceanops-report-card)
  *
- * Data source: OceanOPS operational platform metadata (program country attribution)
- * GO-SHIP / SOT: design lines via line_program → program.country (not platforms)
- * FVON / AniBOS / OceanGliders: monitored platforms include PROBABLE status (not only OPERATIONAL)
+ * Data source: OceanOPS PostgreSQL (ptf_loc_n + line_program), filters in geojson-export/sql/*.sql
  * Last updated: ${generatedAt}
  *
  * Note: goShip can be:
@@ -430,45 +207,50 @@ function renderPartnerCountriesJson(countries, meta) {
   return {
     generatedAt,
     edition: EXPORT_EDITION_LABEL,
-    source: 'OceanOPS partner export (program country attribution)',
+    source: 'OceanOPS PostgreSQL partner export (geojson-export/sql criteria)',
     countries: countryList,
     byGeoCountryName: buildGeoCountryIndex(countries, meta),
   }
 }
 
-async function detectSource(requested) {
-  if (requested === 'api' || requested === 'arcgis') return requested
+const __filename = fileURLToPath(import.meta.url)
 
-  const apiUrl = process.env.OCEANOPS_API_URL ?? 'http://localhost:8080/data'
-  try {
-    const payload = await fetchJson(`${apiUrl.replace(/\/$/, '')}/platform/?limit=1`)
-    if (payload?.data) {
-      process.stderr.write(`Using OceanOPS API at ${apiUrl}\n`)
-      return 'api'
-    }
-  } catch {
-    // fall through
+/** @param {string[]} argv */
+function parsePartnerArgs(argv) {
+  const exportPaths = resolveExportPaths(argv)
+  return {
+    exportPaths,
+    output: exportPaths.PARTNER_COUNTRIES_TS,
+    outputJson: exportPaths.PARTNER_COUNTRIES_JSON,
+    dryRun: argv.includes('--dry-run'),
+    noSummary: argv.includes('--no-summary'),
   }
-
-  process.stderr.write('OceanOPS API unavailable — using public ArcGIS REST services\n')
-  return 'arcgis'
 }
 
-async function main() {
+/** @param {string[]} [argv] @param {{ noSummary?: boolean }} [options] */
+export async function runPartnerExport(argv = process.argv.slice(2), options = {}) {
+  const { exportPaths, output: OUTPUT, outputJson: OUTPUT_JSON, dryRun, noSummary: noSummaryFlag } =
+    parsePartnerArgs(argv)
+  const noSummary = options.noSummary ?? noSummaryFlag
+
   assertPartnerExportTargets(exportPaths)
 
-  const source = await detectSource(sourceArg)
-  process.stderr.write(`Exporting partner counts via ${source}…\n`)
+  if (!assertPsqlAvailable()) {
+    throw new Error('Partner export requires psql on PATH')
+  }
 
-  const byNetwork = await exportCounts(source)
+  process.stderr.write(`Exporting partner counts from PostgreSQL (${formatDatabaseUrlForLog()})…\n`)
+  const byNetwork = exportCountsFromDatabase()
   const countries = mergeCountryCounts(byNetwork)
 
-  // Keep editorial entries that may not appear in live export (e.g. EU)
-  const meta = readExistingMetadata(OUTPUT)
   for (const [code, info] of Object.entries(COUNTRY_META_OVERRIDES)) {
     if (!countries.has(code)) {
       countries.set(code, Object.fromEntries(NETWORK_KEYS.map((k) => [k, 0])))
     }
+  }
+
+  const meta = readExistingMetadata(OUTPUT)
+  for (const [code, info] of Object.entries(COUNTRY_META_OVERRIDES)) {
     meta[code] = { ...meta[code], ...info }
   }
 
@@ -479,12 +261,10 @@ async function main() {
     process.stdout.write(output)
     process.stdout.write(`\n\n--- partnerCountries.json preview ---\n`)
     process.stdout.write(`${JSON.stringify(outputJson, null, 2)}\n`)
-    printExportCriteriaSummary(byNetwork, {
-      GO_SHIP_SELECTED_LINE_NAMES,
-      SOT_SELECTED_LINE_NAMES,
-      EXPORT_EDITION_LABEL,
-    })
-    return
+    if (!noSummary) {
+      printExportCriteriaSummary(byNetwork, { EXPORT_EDITION_LABEL })
+    }
+    return { byNetwork }
   }
 
   fs.mkdirSync(path.dirname(OUTPUT), { recursive: true })
@@ -495,14 +275,26 @@ async function main() {
   fs.writeFileSync(OUTPUT_JSON, `${JSON.stringify(outputJson, null, 2)}\n`, 'utf8')
   process.stderr.write(`Wrote ${OUTPUT_JSON}\n`)
 
-  printExportCriteriaSummary(byNetwork, {
-    GO_SHIP_SELECTED_LINE_NAMES,
-    SOT_SELECTED_LINE_NAMES,
-    EXPORT_EDITION_LABEL,
-  })
+  if (!noSummary) {
+    printExportCriteriaSummary(byNetwork, { EXPORT_EDITION_LABEL })
+  }
+
+  return { byNetwork }
 }
 
-main().catch((err) => {
-  console.error(err)
-  process.exit(1)
-})
+async function main() {
+  await runPartnerExport()
+}
+
+function isDirectRun() {
+  const entry = process.argv[1]
+  if (!entry) return false
+  return path.resolve(entry) === path.resolve(__filename)
+}
+
+if (isDirectRun()) {
+  main().catch((err) => {
+    console.error(err instanceof Error ? err.message : err)
+    process.exit(1)
+  })
+}
