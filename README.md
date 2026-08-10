@@ -48,6 +48,7 @@ npm run export:geojson -- --geojson-dir=/path/to/public/geojson
 | `npm run export:partners` | Partner counts → report-card TS + simple-map JSON |
 | `npm run export:geojson` | Map layers → `oceanops-simple-map/public/geojson/` |
 | `npm run export:all` | Both exports + one combined summary (counts, filters for map + partners) |
+| `npm run export:all:dry-run` | Same as `export:all` without writing TS/JSON/GeoJSON files |
 | `npm run render:sql -- <file\|all\|geojson\|partners>` | Print SQL with edition values (pgAdmin) |
 | `*:dry-run` | Print SQL or preview without writing files |
 

@@ -11,6 +11,7 @@
     "export:geojson:dry-run": "node export-geojson.mjs --dry-run",
     "render:sql": "node render-sql.mjs",
     "export:all": "node export-all.mjs",
+    "export:all:dry-run": "node export-all.mjs --dry-run",
     "densify:geojson": "node densify-geojson.mjs"
   },
   "engines": {
