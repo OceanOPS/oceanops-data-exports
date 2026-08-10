@@ -1,12 +1,12 @@
--- Layer: argo
--- OPERATIONAL Argo floats
+-- Layer: moored_buoys
+-- OPERATIONAL moored buoys (excl. OceanSITES)
 -- Edit WHERE (or line IN list) here, test in pgAdmin, then: npm run export:geojson
---   psql "$OCEANOPS_DATABASE_URL" -v ON_ERROR_STOP=1 -f geojson-export/sql/argo.sql
+--   psql "$OCEANOPS_DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/moored_buoys.sql
 -- Edit filter under @where; edition.values.json for dates / line lists.
--- pgAdmin: npm run render:sql -- geojson-export/sql/argo.sql
+-- pgAdmin: npm run render:sql -- sql/moored_buoys.sql
 
 -- @where
-upper(t.network) LIKE '%ARGO%' AND t.ptf_status = 6
+t.ptf_status = 6 AND t.ptf_family = 'MB' AND t.network NOT LIKE '%OceanSITES%'
 
 -- @geojson
 SELECT jsonb_build_object(
@@ -16,7 +16,7 @@ SELECT jsonb_build_object(
       'type', 'Feature',
       'geometry', ST_AsGeoJSON(t.shape)::jsonb,
       'properties', jsonb_build_object(
-        'category', 'Profiling_floats_Argo',
+        'category', 'moored_buoys',
         'ptf_id', t.ptf_id,
         'ptf_ref', t.ptf_ref,
         'ptf_model', t.ptf_model,

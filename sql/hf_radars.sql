@@ -1,9 +1,9 @@
 -- Layer: hf_radars
 -- All HF radars (no status filter)
 -- Edit WHERE (or line IN list) here, test in pgAdmin, then: npm run export:geojson
---   psql "$OCEANOPS_DATABASE_URL" -v ON_ERROR_STOP=1 -f geojson-export/sql/hf_radars.sql
+--   psql "$OCEANOPS_DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/hf_radars.sql
 -- Edit filter under @where; edition.values.json for dates / line lists.
--- pgAdmin: npm run render:sql -- geojson-export/sql/hf_radars.sql
+-- pgAdmin: npm run render:sql -- sql/hf_radars.sql
 
 -- @where
 t.ptf_type = 'HF_RADAR'

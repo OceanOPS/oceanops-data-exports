@@ -8,9 +8,9 @@ import { fileURLToPath } from 'node:url'
 import { renderEditionSql } from './editionValues.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-export const NETWORK_SQL_DIR = path.join(__dirname, 'geojson-export', 'sql')
+export const NETWORK_SQL_DIR = path.join(__dirname, 'sql')
 
-/** Partner export key → geojson-export/sql/{layerId}.sql */
+/** Partner export key → sql/{layerId}.sql */
 export const PARTNER_KEY_TO_LAYER_ID = {
   driftingBuoys: 'drifting_buoys',
   argo: 'argo',
@@ -129,10 +129,22 @@ export function formatNetworkSqlHint(layerId, sqlSource = 'ptf_loc_n') {
     return `${sqlSource}: ${compactSqlHint(readRenderedNetworkWhere(layerId))}`
   }
 
+  if (/\bWITH\s+selected_lines\b/i.test(parts.partner)) {
+    const selection = compactSqlHint(readRenderedNetworkWhere(layerId))
+    return `${sqlSource}: design lines (${selection}) → line_id → line_program → country`
+  }
+
   const partnerRendered = readNetworkSqlSection(layerId, 'partner')
-  const whereMatch = partnerRendered.match(/\bWHERE\b([\s\S]+?)(?:\bGROUP BY\b|\bORDER BY\b|$)/i)
-  if (whereMatch) {
-    return `${sqlSource}: ${compactSqlHint(whereMatch[1])}`
+  const lineFamilyMatch = partnerRendered.match(/\blf\.name\s*=\s*'([^']+)'/i)
+  if (lineFamilyMatch) {
+    const namesIn = partnerRendered.match(/\bl\.name\s+IN\s*\(([^)]*)\)/i)
+    const lineList =
+      namesIn && namesIn[1].length > 80
+        ? `l.name IN (...${namesIn[1].split(',').filter((s) => s.trim()).length} lines...)`
+        : namesIn
+          ? `l.name IN (${namesIn[1].trim()})`
+          : 'see @partner in sql file'
+    return `${sqlSource}: ${lineFamilyMatch[1]}; ${lineList}`
   }
 
   return `${sqlSource}: ${compactSqlHint(readRenderedNetworkWhere(layerId))}`

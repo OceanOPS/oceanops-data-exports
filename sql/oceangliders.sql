@@ -1,12 +1,12 @@
--- Layer: asap
--- OPERATIONAL ASAP ships
+-- Layer: oceangliders
+-- OceanGliders — layer-table statuses, latest_loc_date >= 2024-01-01
 -- Edit WHERE (or line IN list) here, test in pgAdmin, then: npm run export:geojson
---   psql "$OCEANOPS_DATABASE_URL" -v ON_ERROR_STOP=1 -f geojson-export/sql/asap.sql
+--   psql "$OCEANOPS_DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/oceangliders.sql
 -- Edit filter under @where; edition.values.json for dates / line lists.
--- pgAdmin: npm run render:sql -- geojson-export/sql/asap.sql
+-- pgAdmin: npm run render:sql -- sql/oceangliders.sql
 
 -- @where
-t.ptf_status = 6 AND t.network LIKE '%ASAP%'
+t.ptf_status IN ({{LAYER_TABLE_PTF_STATUS_IN}}) AND t.master_program = 'OceanGliders' AND t.latest_loc_date >= DATE '{{OCEAN_GLIDERS_MIN_LOC_DATE}}'
 
 -- @geojson
 SELECT jsonb_build_object(
@@ -16,7 +16,7 @@ SELECT jsonb_build_object(
       'type', 'Feature',
       'geometry', ST_AsGeoJSON(t.shape)::jsonb,
       'properties', jsonb_build_object(
-        'category', 'ship_based_meteorological_sot',
+        'category', 'Profiling_floats_Argo',
         'ptf_id', t.ptf_id,
         'ptf_ref', t.ptf_ref,
         'ptf_model', t.ptf_model,

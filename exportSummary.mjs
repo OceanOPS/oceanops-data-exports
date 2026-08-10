@@ -22,7 +22,7 @@ export function printCombinedExportSummary(byNetwork, countsByLayer, config = {}
 
   process.stderr.write('\n── Export summary (partners + GeoJSON) ──\n')
   process.stderr.write(`Edition: ${edition}\n`)
-  process.stderr.write('SQL: geojson-export/sql/*.sql (@where + @geojson / @partner)\n')
+  process.stderr.write('SQL: sql/*.sql (@where + @geojson / @partner)\n')
   process.stderr.write('Values: edition.values.json\n\n')
 
   for (const partnerKey of NETWORK_KEYS) {
@@ -48,7 +48,7 @@ export function printCombinedExportSummary(byNetwork, countsByLayer, config = {}
       process.stderr.write(`  Filter (@where): ${mapHint}\n`)
     }
 
-    process.stderr.write(`  SQL: geojson-export/sql/${layerId}.sql\n\n`)
+    process.stderr.write(`  SQL: sql/${layerId}.sql\n\n`)
   }
 
   process.stderr.write('Shared edition values\n')

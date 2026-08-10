@@ -10,7 +10,7 @@
  * Environment: OCEANOPS_DATABASE_URL, GEOJSON_EXPORT_EDITION
  *   OCEANOPS_SIMPLE_MAP_ROOT, GEOJSON_OUTPUT_DIR
  * Options: --simple-map-root=, --geojson-dir=
- * Edit geojson-export/sql/*.sql (pgAdmin), then npm run export:geojson.
+ * Edit sql/*.sql (pgAdmin), then npm run export:geojson.
  */
 
 import fs from 'node:fs'
@@ -83,7 +83,7 @@ async function exportLayer(layerId, opts) {
   const sql = readLayerSql(layerId)
 
   if (dryRun) {
-    process.stderr.write(`\n--- ${layerId} (geojson-export/sql/${layerId}.sql) ---\n${sql}\n`)
+    process.stderr.write(`\n--- ${layerId} (sql/${layerId}.sql) ---\n${sql}\n`)
     return { layerId, featureCount: 0, written: [] }
   }
 

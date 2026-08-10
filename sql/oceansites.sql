@@ -1,9 +1,9 @@
 -- Layer: oceansites
 -- OceanSITES moorings — OPERATIONAL or INACTIVE
 -- Edit WHERE (or line IN list) here, test in pgAdmin, then: npm run export:geojson
---   psql "$OCEANOPS_DATABASE_URL" -v ON_ERROR_STOP=1 -f geojson-export/sql/oceansites.sql
+--   psql "$OCEANOPS_DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/oceansites.sql
 -- Edit filter under @where; edition.values.json for dates / line lists.
--- pgAdmin: npm run render:sql -- geojson-export/sql/oceansites.sql
+-- pgAdmin: npm run render:sql -- sql/oceansites.sql
 
 -- @where
 t.ptf_status IN (4, 6) AND t.network LIKE '%OceanSITES%'

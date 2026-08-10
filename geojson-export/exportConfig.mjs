@@ -1,5 +1,5 @@
 /**
- * GeoJSON export — layer list and sql/*.sql paths.
+ * GeoJSON export — layer list (layers.manifest.json). SQL: ../sql/*.sql
  */
 
 import fs from 'node:fs'
@@ -10,13 +10,14 @@ import {
   formatGeojsonSqlHint,
   GEOJSON_SQL_SOURCE,
   LAYER_ID_TO_PARTNER_KEY,
+  NETWORK_SQL_DIR,
   PARTNER_KEY_TO_LAYER_ID,
   readNetworkSqlSection,
 } from '../networkSql.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-export const SQL_DIR = path.join(__dirname, 'sql')
+export const SQL_DIR = NETWORK_SQL_DIR
 
 /** @type {{ layers: Record<string, ManifestLayerEntry> }} */
 const manifest = JSON.parse(
@@ -98,8 +99,8 @@ export function printExportSummary(countsByLayer) {
     const sqlSource = GEOJSON_SQL_SOURCE[layerId] ?? 'ptf_loc_n'
     process.stderr.write(`  ${partnerKey}: ${count} features — ${entry.summary}\n`)
     process.stderr.write(`    SQL hint: ${formatGeojsonSqlHint(layerId, sqlSource)}\n`)
-    process.stderr.write(`    SQL: geojson-export/sql/${layerId}.sql\n`)
+    process.stderr.write(`    SQL: sql/${layerId}.sql\n`)
   }
 
-  process.stderr.write('\nEdit geojson-export/sql/*.sql (@where) and edition.values.json.\n')
+  process.stderr.write('\nEdit sql/*.sql (@where) and edition.values.json.\n')
 }

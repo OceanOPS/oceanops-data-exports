@@ -1,10 +1,9 @@
--- Template: **line** layer (GO-SHIP, SOOP XBT)
---
--- 1. Copy to `<layerId>.sql`
--- 2. Set FROM table, category, line list tokens in @where / @partner
--- 3. Register in `../layers.manifest.json` with `"densify": true` for globe display
---
--- Line exports also write `<layerId>_undensified.geojson`; the map uses densified `<layerId>.geojson`.
+-- Layer: goship
+-- GO-SHIP design lines — manual name list
+-- Edit WHERE (or line IN list) here, test in pgAdmin, then: npm run export:geojson
+--   psql "$OCEANOPS_DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/goship.sql
+-- Edit filter under @where; edition.values.json for dates / line lists.
+-- pgAdmin: npm run render:sql -- sql/goship.sql
 
 -- @where
 t.shape IS NOT NULL AND t.name IN ({{GOSHIP_LINE_NAMES_IN}})
@@ -28,7 +27,7 @@ FROM oceanops_gis.goship_design_goship_1 AS t
 WHERE {{WHERE}};
 
 -- @partner
--- Selected design line_id(s) → line_program → country (same line list as @where / map)
+-- Per-country lines: design rows (same names as map) → line_program → program.country
 SET search_path TO oceanops, oceanops_gis, public;
 WITH selected_lines AS (
   SELECT DISTINCT g.line_id

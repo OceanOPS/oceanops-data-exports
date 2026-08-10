@@ -1,9 +1,9 @@
 -- Layer: drifting_buoys
 -- OPERATIONAL drifting buoys (DB family)
 -- Edit WHERE (or line IN list) here, test in pgAdmin, then: npm run export:geojson
---   psql "$OCEANOPS_DATABASE_URL" -v ON_ERROR_STOP=1 -f geojson-export/sql/drifting_buoys.sql
+--   psql "$OCEANOPS_DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/drifting_buoys.sql
 -- Edit filter under @where; edition.values.json for dates / line lists.
--- pgAdmin: npm run render:sql -- geojson-export/sql/drifting_buoys.sql
+-- pgAdmin: npm run render:sql -- sql/drifting_buoys.sql
 
 -- @where
 t.ptf_status = 6 AND t.ptf_family = 'DB'

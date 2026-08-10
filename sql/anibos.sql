@@ -1,9 +1,9 @@
 -- Layer: anibos
 -- AniBOS — layer-table statuses, ANIMAL family or AniBOS network, latest_loc_date >= 2025-01-01
 -- Edit WHERE (or line IN list) here, test in pgAdmin, then: npm run export:geojson
---   psql "$OCEANOPS_DATABASE_URL" -v ON_ERROR_STOP=1 -f geojson-export/sql/anibos.sql
+--   psql "$OCEANOPS_DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/anibos.sql
 -- Edit filter under @where; edition.values.json for dates / line lists.
--- pgAdmin: npm run render:sql -- geojson-export/sql/anibos.sql
+-- pgAdmin: npm run render:sql -- sql/anibos.sql
 
 -- @where
 t.ptf_status IN ({{LAYER_TABLE_PTF_STATUS_IN}}) AND (t.ptf_family = 'ANIMAL' OR t.network ILIKE '%AniBOS%') AND t.latest_loc_date >= DATE '{{ANIBOS_MIN_LOC_DATE}}'

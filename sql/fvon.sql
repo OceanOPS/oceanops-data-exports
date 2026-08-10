@@ -1,15 +1,12 @@
--- Template: operational **point** layer
---
--- 1. Copy to `<layerId>.sql` (e.g. fvon.sql)
--- 2. Set `category` in @geojson properties (must match map categories)
--- 3. Edit -- @where before each edition; use {{LAYER_TABLE_PTF_STATUS_IN}} etc. from edition.values.json
--- 4. Register in `../layers.manifest.json`
--- 5. pgAdmin: npm run render:sql -- geojson-export/sql/<layerId>.sql
---
--- To omit ship or sensor country from popups, comment out JOIN + property lines in @geojson.
+-- Layer: fvon
+-- FVON — layer-table statuses, latest_loc_date >= 2025-01-01
+-- Edit WHERE (or line IN list) here, test in pgAdmin, then: npm run export:geojson
+--   psql "$OCEANOPS_DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/fvon.sql
+-- Edit filter under @where; edition.values.json for dates / line lists.
+-- pgAdmin: npm run render:sql -- sql/fvon.sql
 
 -- @where
-upper(t.network) LIKE '%ARGO%' AND t.ptf_status = 6
+t.network ILIKE '%FVON%' AND t.ptf_status IN ({{LAYER_TABLE_PTF_STATUS_IN}}) AND t.latest_loc_date >= DATE '{{FVON_MIN_LOC_DATE}}'
 
 -- @geojson
 SELECT jsonb_build_object(
@@ -19,7 +16,7 @@ SELECT jsonb_build_object(
       'type', 'Feature',
       'geometry', ST_AsGeoJSON(t.shape)::jsonb,
       'properties', jsonb_build_object(
-        'category', 'Profiling_floats_Argo',
+        'category', 'fvon',
         'ptf_id', t.ptf_id,
         'ptf_ref', t.ptf_ref,
         'ptf_model', t.ptf_model,

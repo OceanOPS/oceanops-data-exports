@@ -1,5 +1,5 @@
 /**
- * Run partner section from geojson-export/sql/*.sql.
+ * Run partner section from sql/*.sql.
  */
 
 import { readPartnerNetworkSql } from '../networkSql.mjs'

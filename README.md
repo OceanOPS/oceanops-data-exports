@@ -12,6 +12,9 @@ Clone this repo **next to** the app repos:
 ```text
 OceanOPS/
   oceanops-data-exports/    ← this repo
+    sql/                    ← edition filters + @geojson / @partner (shared)
+    geojson-export/         ← layers.manifest.json, densify
+    partner-export/         ← country metadata, partner runners
   oceanops-report-card/
   oceanops-simple-map/
 ```
@@ -58,7 +61,7 @@ npm run export:geojson -- --geojson-dir=/path/to/public/geojson
 2. **`../oceanops-simple-map/src/data/partnerCountries.json`** — globe country metrics (`byGeoCountryName` maps `CANADA` → `CA`, etc.).
 
 Configure edition **values** in **`edition.values.json`** (dates, line lists).  
-Configure **filters and queries** in **`geojson-export/sql/*.sql`** (`-- @where`, `-- @geojson`, `-- @partner` + `{{tokens}}`).
+Configure **filters and queries** in **`sql/*.sql`** (`-- @where`, `-- @geojson`, `-- @partner` + `{{tokens}}`).
 
 - `partner-export/countryMeta.mjs` — EU and other editorial country metadata
 - `geoCountryNames.mjs` — ISO ↔ GeoJSON `country_name` for the map
@@ -89,7 +92,7 @@ Options: `--dry-run`
 
 Writes **`../oceanops-simple-map/public/geojson/{layerId}.geojson`**.
 
-1. Edit **`edition.values.json`** and SQL files under **`geojson-export/sql/`**.
+1. Edit **`edition.values.json`** and SQL files under **`sql/`**.
 2. `npm run export:geojson`
 
 ### Environment (GeoJSON)
@@ -117,6 +120,6 @@ npm run export:geojson    # in oceanops-simple-map
 
 ## Release checklist
 
-1. Update `edition.values.json` and `geojson-export/sql/*.sql` for the edition.
+1. Update `edition.values.json` and `sql/*.sql` for the edition.
 2. From this folder: `npm run export:all`
 3. Commit generated artifacts in report-card and simple-map as needed.

@@ -1,12 +1,12 @@
--- Layer: gloss
--- OPERATIONAL GLOSS sea-level gauges
+-- Layer: vos
+-- OPERATIONAL SOT/VOS ships
 -- Edit WHERE (or line IN list) here, test in pgAdmin, then: npm run export:geojson
---   psql "$OCEANOPS_DATABASE_URL" -v ON_ERROR_STOP=1 -f geojson-export/sql/gloss.sql
+--   psql "$OCEANOPS_DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/vos.sql
 -- Edit filter under @where; edition.values.json for dates / line lists.
--- pgAdmin: npm run render:sql -- geojson-export/sql/gloss.sql
+-- pgAdmin: npm run render:sql -- sql/vos.sql
 
 -- @where
-t.ptf_status = 6 AND t.network LIKE '%GLOSS%'
+t.ptf_status = 6 AND t.network LIKE '%VOS%' AND (t.ptf_type = 'VOS_MWS' OR t.ptf_type = 'VOS_AWS')
 
 -- @geojson
 SELECT jsonb_build_object(
@@ -16,7 +16,7 @@ SELECT jsonb_build_object(
       'type', 'Feature',
       'geometry', ST_AsGeoJSON(t.shape)::jsonb,
       'properties', jsonb_build_object(
-        'category', 'gloss',
+        'category', 'ship_based_meteorological_sot_vos',
         'ptf_id', t.ptf_id,
         'ptf_ref', t.ptf_ref,
         'ptf_model', t.ptf_model,

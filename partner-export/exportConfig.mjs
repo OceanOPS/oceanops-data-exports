@@ -1,7 +1,7 @@
 /**
  * Partner export — summaries and edition label.
  *
- * SQL: geojson-export/sql/{layerId}.sql — @partner section (filter in @where).
+ * SQL: sql/{layerId}.sql — @partner section (filter in @where).
  */
 
 import { loadEditionValues } from '../editionValues.mjs'
@@ -44,7 +44,7 @@ export function printExportCriteriaSummary(byNetwork, config = {}) {
 
   process.stderr.write('\n── Export criteria summary ──\n')
   process.stderr.write(`Edition: ${edition}\n`)
-  process.stderr.write('SQL: geojson-export/sql/*.sql (@where + @geojson / @partner)\n')
+  process.stderr.write('SQL: sql/*.sql (@where + @geojson / @partner)\n')
   process.stderr.write('Values: edition.values.json\n\n')
 
   for (const key of NETWORK_KEYS) {
@@ -54,7 +54,7 @@ export function printExportCriteriaSummary(byNetwork, config = {}) {
     process.stderr.write(`${key} (${total})\n`)
     process.stderr.write(`  ${criteria.summary}\n`)
     process.stderr.write(`  SQL hint: ${formatNetworkSqlHint(criteria.layerId, criteria.sqlSource)}\n`)
-    process.stderr.write(`  SQL: geojson-export/sql/${criteria.layerId}.sql\n`)
+    process.stderr.write(`  SQL: sql/${criteria.layerId}.sql\n`)
   }
 
   process.stderr.write('\nShared edition values\n')
