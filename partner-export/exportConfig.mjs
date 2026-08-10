@@ -26,7 +26,7 @@ export const NETWORK_CRITERIA = {
   sotVos: { summary: 'OPERATIONAL SOT/VOS ships', layerId: 'vos', sqlSource: 'ptf_loc_n' },
   sotAsap: { summary: 'OPERATIONAL ASAP ships', layerId: 'asap', sqlSource: 'ptf_loc_n' },
   sot: { summary: 'SOOP XBT design lines — line_program → country', layerId: 'ship_oceano', sqlSource: 'line_program' },
-  goShip: { summary: 'GO-SHIP design lines — line_program → country', layerId: 'goship', sqlSource: 'line_program' },
+  goShip: { summary: 'GO-SHIP design lines — cruise_line → cruise_program → country', layerId: 'goship', sqlSource: 'cruise_program' },
   gloss: { summary: 'OPERATIONAL GLOSS sea-level gauges', layerId: 'gloss', sqlSource: 'ptf_loc_n' },
   oceanSites: { summary: 'OceanSITES moorings — OPERATIONAL or INACTIVE', layerId: 'oceansites', sqlSource: 'ptf_loc_n' },
   mooredBuoys: { summary: 'OPERATIONAL moored buoys (excl. OceanSITES)', layerId: 'moored_buoys', sqlSource: 'ptf_loc_n' },

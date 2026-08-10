@@ -65,7 +65,9 @@ function exportCountsFromDatabase() {
     byNetwork[networkKey] = fetchPartnerCountsByCountryOrThrow(networkKey)
     const total = Object.values(byNetwork[networkKey]).reduce((a, b) => a + b, 0)
     if (total === 0 && LINE_NETWORK_KEYS.includes(networkKey)) {
-      process.stderr.write('0 (no line_program rows for selected design lines on this DB)\n')
+      process.stderr.write(
+        `0 (no partner rows for selected design lines on this DB — check ${networkKey === 'goShip' ? 'cruise_line/cruise_program' : 'line_program'})\n`,
+      )
     } else {
       process.stderr.write(`${total}\n`)
     }
