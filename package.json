@@ -9,7 +9,8 @@
     "export:partners:dry-run": "node export-partner-countries.mjs --dry-run",
     "export:geojson": "node export-geojson.mjs",
     "export:geojson:dry-run": "node export-geojson.mjs --dry-run",
-    "export:all": "npm run export:partners && npm run export:geojson",
+    "render:sql": "node render-sql.mjs",
+    "export:all": "node export-all.mjs",
     "densify:geojson": "node densify-geojson.mjs"
   },
   "engines": {

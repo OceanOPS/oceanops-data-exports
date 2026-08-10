@@ -6,37 +6,16 @@ import { spawnSync } from 'node:child_process'
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import {
+  formatDatabaseUrlForLog,
+  loadDotEnv,
+  parseDatabaseUrl,
+  resolveDatabaseUrl,
+} from '../databaseUrl.mjs'
 
-/** @returns {string} */
-export function resolveDatabaseUrl() {
-  if (process.env.OCEANOPS_DATABASE_URL) return process.env.OCEANOPS_DATABASE_URL
-  if (process.env.OCEANOPS_DB_URL) return process.env.OCEANOPS_DB_URL
+loadDotEnv()
 
-  const host = process.env.OCEANOPS_DB_HOST ?? '127.0.0.1'
-  const port = process.env.OCEANOPS_DB_PORT ?? '5432'
-  const user = process.env.OCEANOPS_DB_USER ?? 'oceanops'
-  const password = process.env.OCEANOPS_DB_PASS ?? 'oceanops'
-  const database = process.env.OCEANOPS_DB_NAME ?? 'oceanops'
-
-  return `postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${database}`
-}
-
-/** @param {string} url @returns {{ host: string, port: string, user: string, password: string, database: string } | null} */
-function parseDatabaseUrl(url) {
-  try {
-    const parsed = new URL(url)
-    if (parsed.protocol !== 'postgresql:' && parsed.protocol !== 'postgres:') return null
-    return {
-      host: parsed.hostname,
-      port: parsed.port || '5432',
-      user: decodeURIComponent(parsed.username),
-      password: decodeURIComponent(parsed.password),
-      database: parsed.pathname.replace(/^\//, ''),
-    }
-  } catch {
-    return null
-  }
-}
+export { formatDatabaseUrlForLog, loadDotEnv, parseDatabaseUrl, resolveDatabaseUrl }
 
 /**
  * @param {string} sql
@@ -48,7 +27,6 @@ export function runPsqlQuery(sql) {
     return { ok: false, error: 'Invalid OCEANOPS_DATABASE_URL' }
   }
 
-  // Write query output to a temp file — GeoJSON layers can exceed spawnSync's stdout buffer (ENOBUFS).
   const tmpDir = mkdtempSync(join(tmpdir(), 'oceanops-geojson-'))
   const outFile = join(tmpDir, 'query.out')
 

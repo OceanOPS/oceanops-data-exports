@@ -1,0 +1,90 @@
+{
+  "layers": {
+    "argo": {
+      "geometryKind": "point",
+      "category": "Profiling_floats_Argo",
+      "summary": "OPERATIONAL Argo floats",
+      "densify": false
+    },
+    "drifting_buoys": {
+      "geometryKind": "point",
+      "category": "drifting_buoys",
+      "summary": "OPERATIONAL drifting buoys (DB family)",
+      "densify": false
+    },
+    "vos": {
+      "geometryKind": "point",
+      "category": "ship_based_meteorological_sot_vos",
+      "summary": "OPERATIONAL SOT/VOS ships",
+      "densify": false
+    },
+    "asap": {
+      "geometryKind": "point",
+      "category": "ship_based_meteorological_sot",
+      "summary": "OPERATIONAL ASAP ships",
+      "densify": false
+    },
+    "gloss": {
+      "geometryKind": "point",
+      "category": "gloss",
+      "summary": "OPERATIONAL GLOSS sea-level gauges",
+      "densify": false
+    },
+    "moored_buoys": {
+      "geometryKind": "point",
+      "category": "moored_buoys",
+      "summary": "OPERATIONAL moored buoys (excl. OceanSITES)",
+      "densify": false
+    },
+    "tsunami_buoys": {
+      "geometryKind": "point",
+      "category": "tsunami_buoys",
+      "summary": "OPERATIONAL tsunameter buoys",
+      "densify": false
+    },
+    "hf_radars": {
+      "geometryKind": "point",
+      "category": "hf_radars",
+      "summary": "All HF radars (no status filter)",
+      "densify": false
+    },
+    "oceansites": {
+      "geometryKind": "point",
+      "category": "oceansites",
+      "summary": "OceanSITES moorings — OPERATIONAL or INACTIVE",
+      "densify": false
+    },
+    "oceangliders": {
+      "geometryKind": "point",
+      "category": "Profiling_floats_Argo",
+      "summary": "OceanGliders — layer-table statuses, latest_loc_date >= 2024-01-01",
+      "densify": false
+    },
+    "anibos": {
+      "geometryKind": "point",
+      "category": "anibos",
+      "summary": "AniBOS — layer-table statuses, ANIMAL family or AniBOS network, latest_loc_date >= 2025-01-01",
+      "densify": false
+    },
+    "fvon": {
+      "geometryKind": "point",
+      "category": "fvon",
+      "summary": "FVON — layer-table statuses, latest_loc_date >= 2025-01-01",
+      "densify": false
+    },
+    "goship": {
+      "geometryKind": "line",
+      "category": "goship",
+      "sourceTable": "oceanops_gis.goship_design_goship_1",
+      "summary": "GO-SHIP design lines — manual name list",
+      "densify": true
+    },
+    "ship_oceano": {
+      "geometryKind": "line",
+      "category": "ship_based_oceanographic_sot",
+      "sourceTable": "oceanops_gis.soop_xbt_design_2021_2022",
+      "summary": "SOOP XBT design lines — manual name list",
+      "densify": true
+    }
+  }
+}

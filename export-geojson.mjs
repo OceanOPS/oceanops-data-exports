@@ -3,44 +3,55 @@
  * Export static GeoJSON map layers from OceanOPS PostgreSQL.
  *
  * Usage:
- *   node export-geojson.mjs [--dry-run] [--layer=argo] [--no-densify]
- *       [--no-country-ship] [--no-country-sensor]
+ *   node export-geojson.mjs [--dry-run] [--no-summary] [--layer=argo] [--no-densify]
  *
  * Output: {geojson-dir}/{layerId}.geojson (default: simple-map public/geojson)
  *
  * Environment: OCEANOPS_DATABASE_URL, GEOJSON_EXPORT_EDITION
  *   OCEANOPS_SIMPLE_MAP_ROOT, GEOJSON_OUTPUT_DIR
  * Options: --simple-map-root=, --geojson-dir=
- * Edit geojson-export/exportConfig.mjs before each edition.
+ * Edit geojson-export/sql/*.sql (pgAdmin), then npm run export:geojson.
  */
 
 import fs from 'node:fs'
 import path from 'node:path'
-import { buildLayerSql } from './geojson-export/buildSql.mjs'
-import { assertPsqlAvailable, resolveDatabaseUrl, runPsqlQuery } from './geojson-export/db.mjs'
+import { fileURLToPath } from 'node:url'
+import { formatDatabaseUrlForLog, loadDotEnv } from './databaseUrl.mjs'
+import { assertPsqlAvailable, runPsqlQuery } from './geojson-export/db.mjs'
+
+loadDotEnv()
 import { densifyFeatureCollection } from './geojson-export/densifyLayer.mjs'
+import { LAYER_ID_TO_PARTNER_KEY } from './networkSql.mjs'
 import {
   DENSIFY_LAYER_IDS,
   EXPORT_EDITION_LABEL,
-  LAYER_EXPORT_CONFIG,
+  LAYER_MANIFEST,
   LAYER_IDS,
   printExportSummary,
+  readLayerSql,
 } from './geojson-export/exportConfig.mjs'
 import {
   assertGeojsonExportTargets,
   resolveExportPaths,
 } from './paths.mjs'
 
-const args = process.argv.slice(2)
-const exportPaths = resolveExportPaths(args)
-const OUTPUT_DIR = exportPaths.GEOJSON_OUTPUT_DIR
-const SIMPLE_MAP_ROOT = exportPaths.SIMPLE_MAP_ROOT
-const dryRun = args.includes('--dry-run')
-const noDensify = args.includes('--no-densify')
-const includeCountryShip = !args.includes('--no-country-ship')
-const includeCountrySensorProvider = !args.includes('--no-country-sensor')
-const layerArg = args.find((arg) => arg.startsWith('--layer='))?.split('=')[1]
-const layerFilter = layerArg ? layerArg.split(',').map((id) => id.trim()).filter(Boolean) : null
+const __filename = fileURLToPath(import.meta.url)
+
+/** @param {string[]} argv */
+function parseGeojsonArgs(argv) {
+  const exportPaths = resolveExportPaths(argv)
+  const layerArg = argv.find((arg) => arg.startsWith('--layer='))?.split('=')[1]
+  const layerFilter = layerArg ? layerArg.split(',').map((id) => id.trim()).filter(Boolean) : null
+  return {
+    exportPaths,
+    outputDir: exportPaths.GEOJSON_OUTPUT_DIR,
+    simpleMapRoot: exportPaths.SIMPLE_MAP_ROOT,
+    dryRun: argv.includes('--dry-run'),
+    noSummary: argv.includes('--no-summary'),
+    noDensify: argv.includes('--no-densify'),
+    layerFilter,
+  }
+}
 
 /** @param {string} filePath @param {unknown} geojson */
 function writeGeoJson(filePath, geojson) {
@@ -64,17 +75,15 @@ function parseFeatureCollection(raw) {
 
 /**
  * @param {string} layerId
- * @param {import('./geojson-export/exportConfig.mjs').PointLayerExportConfig | import('./geojson-export/exportConfig.mjs').LineLayerExportConfig} config
+ * @param {ReturnType<typeof parseGeojsonArgs>} opts
  */
-async function exportLayer(layerId, config) {
-  const sql = buildLayerSql(layerId, config, {
-    includeCountryShip: config.geometryKind === 'point' ? includeCountryShip : false,
-    includeCountrySensorProvider:
-      config.geometryKind === 'point' ? includeCountrySensorProvider : false,
-  })
+async function exportLayer(layerId, opts) {
+  const { outputDir: OUTPUT_DIR, simpleMapRoot: SIMPLE_MAP_ROOT, dryRun, noDensify } = opts
+  const entry = LAYER_MANIFEST[layerId]
+  const sql = readLayerSql(layerId)
 
   if (dryRun) {
-    process.stderr.write(`\n--- ${layerId} ---\n${sql}\n`)
+    process.stderr.write(`\n--- ${layerId} (geojson-export/sql/${layerId}.sql) ---\n${sql}\n`)
     return { layerId, featureCount: 0, written: [] }
   }
 
@@ -87,7 +96,7 @@ async function exportLayer(layerId, config) {
   const featureCount = collection.features.length
   const written = []
 
-  if (config.geometryKind === 'line') {
+  if (entry.geometryKind === 'line') {
     const undensifiedPath = path.join(OUTPUT_DIR, `${layerId}_undensified.geojson`)
     writeGeoJson(undensifiedPath, collection)
     written.push(undensifiedPath)
@@ -106,7 +115,8 @@ async function exportLayer(layerId, config) {
     written.push(outputPath)
   }
 
-  process.stderr.write(`  ${layerId}: ${featureCount} features\n`)
+  const partnerKey = LAYER_ID_TO_PARTNER_KEY[layerId] ?? layerId
+  process.stderr.write(`  ${partnerKey}: ${featureCount} features\n`)
   for (const filePath of written) {
     process.stderr.write(`    → ${path.relative(SIMPLE_MAP_ROOT, filePath)}\n`)
   }
@@ -114,7 +124,12 @@ async function exportLayer(layerId, config) {
   return { layerId, featureCount, written }
 }
 
-async function main() {
+/** @param {string[]} [argv] @param {{ noSummary?: boolean }} [options] */
+export async function runGeojsonExport(argv = process.argv.slice(2), options = {}) {
+  const opts = parseGeojsonArgs(argv)
+  const noSummary = options.noSummary ?? opts.noSummary
+  const { exportPaths, outputDir: OUTPUT_DIR, simpleMapRoot: SIMPLE_MAP_ROOT, dryRun, layerFilter } = opts
+
   assertGeojsonExportTargets(exportPaths)
 
   if (!assertPsqlAvailable()) {
@@ -122,7 +137,7 @@ async function main() {
   }
 
   const layerIds = (layerFilter ?? LAYER_IDS).filter((layerId) => {
-    if (!LAYER_EXPORT_CONFIG[layerId]) {
+    if (!LAYER_MANIFEST[layerId]) {
       process.stderr.write(`Unknown layer "${layerId}" — skipped\n`)
       return false
     }
@@ -134,27 +149,42 @@ async function main() {
   }
 
   process.stderr.write(`GeoJSON export (${EXPORT_EDITION_LABEL})\n`)
-  process.stderr.write(`Database: ${resolveDatabaseUrl()}\n`)
-  process.stderr.write(`Layers: ${layerIds.join(', ')}\n`)
+  process.stderr.write(`Database: ${formatDatabaseUrlForLog()}\n`)
+  process.stderr.write(`Layers: ${layerIds.map((id) => LAYER_ID_TO_PARTNER_KEY[id] ?? id).join(', ')}\n`)
   if (dryRun) process.stderr.write('Mode: dry-run (SQL only, no files written)\n')
 
   /** @type {Record<string, number>} */
   const countsByLayer = {}
 
   for (const layerId of layerIds) {
-    const config = LAYER_EXPORT_CONFIG[layerId]
-    const result = await exportLayer(layerId, config)
+    const result = await exportLayer(layerId, opts)
     countsByLayer[layerId] = result.featureCount
   }
 
-  printExportSummary(countsByLayer)
+  if (!noSummary) {
+    printExportSummary(countsByLayer)
+  }
 
   if (!dryRun) {
     process.stderr.write(`\nWrote GeoJSON to ${path.relative(SIMPLE_MAP_ROOT, OUTPUT_DIR)}/\n`)
   }
+
+  return { countsByLayer }
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error)
-  process.exit(1)
-})
+async function main() {
+  await runGeojsonExport()
+}
+
+function isDirectRun() {
+  const entry = process.argv[1]
+  if (!entry) return false
+  return path.resolve(entry) === path.resolve(__filename)
+}
+
+if (isDirectRun()) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.message : error)
+    process.exit(1)
+  })
+}
