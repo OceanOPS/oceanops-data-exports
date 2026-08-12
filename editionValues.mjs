@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export const EDITION_VALUES_PATH = path.join(__dirname, 'edition.values.json')
 
-/** @typedef {{ LAYER_TABLE_PTF_STATUS_IN: string, OCEAN_GLIDERS_MIN_LOC_DATE: string, ANIBOS_MIN_LOC_DATE: string, FVON_MIN_LOC_DATE: string, GOSHIP_LINE_NAMES: string[], SOOP_XBT_LINE_NAMES: string[] }} EditionValues */
+/** @typedef {{ LAYER_TABLE_PTF_STATUS_IN: string, OCEAN_GLIDERS_MIN_LOC_DATE: string, ANIBOS_MIN_LOC_DATE: string, FVON_MIN_LOC_DATE: string, SOOP_XBT_SAMPLED_SINCE: string, GOSHIP_SAMPLED_SINCE: string, GOSHIP_LINE_NAMES: string[], SOOP_XBT_LINE_NAMES: string[] }} EditionValues */
 
 /** @type {EditionValues | null} */
 let cache = null
@@ -36,6 +36,8 @@ export function editionValueTokens() {
     OCEAN_GLIDERS_MIN_LOC_DATE: v.OCEAN_GLIDERS_MIN_LOC_DATE,
     ANIBOS_MIN_LOC_DATE: v.ANIBOS_MIN_LOC_DATE,
     FVON_MIN_LOC_DATE: v.FVON_MIN_LOC_DATE,
+    SOOP_XBT_SAMPLED_SINCE: v.SOOP_XBT_SAMPLED_SINCE,
+    GOSHIP_SAMPLED_SINCE: v.GOSHIP_SAMPLED_SINCE,
     GOSHIP_LINE_NAMES_IN: sqlQuotedNameList(v.GOSHIP_LINE_NAMES),
     SOOP_XBT_LINE_NAMES_IN: sqlQuotedNameList(v.SOOP_XBT_LINE_NAMES),
   }

@@ -76,14 +76,14 @@
       "geometryKind": "line",
       "category": "goship",
       "sourceTable": "oceanops_gis.goship_design_goship_1",
-      "summary": "GO-SHIP design lines — manual name list",
+      "summary": "GO-SHIP design lines — name list, cruise departure >= GOSHIP_SAMPLED_SINCE",
       "densify": true
     },
     "ship_oceano": {
       "geometryKind": "line",
       "category": "ship_based_oceanographic_sot",
       "sourceTable": "oceanops_gis.soop_xbt_design_2021_2022",
-      "summary": "SOOP XBT design lines — manual name list",
+      "summary": "SOOP XBT design lines — name list, cruise departure >= SOOP_XBT_SAMPLED_SINCE",
       "densify": true
     }
   }

@@ -1,13 +1,13 @@
 -- Template: **line** layer (GO-SHIP, SOOP XBT)
 --
 -- 1. Copy to `<layerId>.sql`
--- 2. Set FROM table, category, line list tokens in @where / @partner
+-- 2. Set FROM table, category, line list tokens in @where
 -- 3. Register in `geojson-export/layers.manifest.json` with `"densify": true` for globe display
 --
--- Line exports also write `<layerId>_undensified.geojson`; the map uses densified `<layerId>.geojson`.
+-- Use alias `g` in @where / @geojson / @partner so {{WHERE}} is shared (like point layers with `t`).
 
 -- @where
-t.shape IS NOT NULL AND t.name IN ({{GOSHIP_LINE_NAMES_IN}})
+g.shape IS NOT NULL AND g.name IN ({{GOSHIP_LINE_NAMES_IN}})
 
 -- @geojson
 SELECT jsonb_build_object(
@@ -15,26 +15,24 @@ SELECT jsonb_build_object(
   'features', COALESCE(jsonb_agg(
     jsonb_build_object(
       'type', 'Feature',
-      'geometry', ST_AsGeoJSON(t.shape)::jsonb,
+      'geometry', ST_AsGeoJSON(g.shape)::jsonb,
       'properties', jsonb_build_object(
         'category', 'goship',
-        'line_id', t.line_id,
-        'line_name', t.name
+        'line_id', g.line_id,
+        'line_name', g.name
       )
     )
   ), '[]'::jsonb)
 )
-FROM oceanops_gis.goship_design_goship_1 AS t
+FROM oceanops_gis.goship_design_goship_1 AS g
 WHERE {{WHERE}};
 
 -- @partner
--- Selected design line_id(s) → line_program → country (same line list as @where / map)
 SET search_path TO oceanops, oceanops_gis, public;
 WITH selected_lines AS (
   SELECT DISTINCT g.line_id
   FROM goship_design_goship_1 AS g
-  WHERE g.shape IS NOT NULL
-    AND g.name IN ({{GOSHIP_LINE_NAMES_IN}})
+  WHERE ({{WHERE}})
     AND g.line_id IS NOT NULL
 )
 SELECT c.code2, COUNT(DISTINCT lp.line_id)::int AS line_count

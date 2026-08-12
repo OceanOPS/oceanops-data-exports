@@ -129,14 +129,6 @@ export function formatNetworkSqlHint(layerId, sqlSource = 'ptf_loc_n') {
     return `${sqlSource}: ${compactSqlHint(readRenderedNetworkWhere(layerId))}`
   }
 
-  if (/\bWITH\s+selected_lines\b/i.test(parts.partner)) {
-    const selection = compactSqlHint(readRenderedNetworkWhere(layerId))
-    const chain = /\bcruise_program\b/i.test(parts.partner)
-      ? 'line_id → cruise_line → cruise_program → country'
-      : 'line_id → line_program → country'
-    return `${sqlSource}: design lines (${selection}) → ${chain}`
-  }
-
   const partnerRendered = readNetworkSqlSection(layerId, 'partner')
   const lineFamilyMatch = partnerRendered.match(/\blf\.name\s*=\s*'([^']+)'/i)
   if (lineFamilyMatch) {

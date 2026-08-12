@@ -1,12 +1,15 @@
 -- Layer: goship
--- GO-SHIP design lines — manual name list
--- Edit WHERE (or line IN list) here, test in pgAdmin, then: npm run export:geojson
---   psql "$OCEANOPS_DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/goship.sql
+-- GO-SHIP design lines — core line list + sampled since edition date (cruise departure)
 -- Edit filter under @where; edition.values.json for dates / line lists.
--- pgAdmin: npm run render:sql -- sql/goship.sql
 
 -- @where
-t.shape IS NOT NULL AND t.name IN ({{GOSHIP_LINE_NAMES_IN}})
+g.shape IS NOT NULL AND g.name IN ({{GOSHIP_LINE_NAMES_IN}}) AND EXISTS (
+  SELECT 1
+  FROM oceanops.cruise_line cl
+  JOIN oceanops.cruise c ON c.id = cl.cruise_id
+  WHERE cl.line_id = g.line_id
+    AND c.departure_date >= DATE '{{GOSHIP_SAMPLED_SINCE}}'
+)
 
 -- @geojson
 SELECT jsonb_build_object(
@@ -14,26 +17,25 @@ SELECT jsonb_build_object(
   'features', COALESCE(jsonb_agg(
     jsonb_build_object(
       'type', 'Feature',
-      'geometry', ST_AsGeoJSON(t.shape)::jsonb,
+      'geometry', ST_AsGeoJSON(g.shape)::jsonb,
       'properties', jsonb_build_object(
         'category', 'goship',
-        'line_id', t.line_id,
-        'line_name', t.name
+        'line_id', g.line_id,
+        'line_name', g.name
       )
     )
   ), '[]'::jsonb)
 )
-FROM oceanops_gis.goship_design_goship_1 AS t
+FROM oceanops_gis.goship_design_goship_1 AS g
 WHERE {{WHERE}};
 
 -- @partner
--- Per-country lines: design rows (same names as map) → cruise → program → country
+-- Per-country lines: same @where as map → cruise → program → country
 SET search_path TO oceanops, oceanops_gis, public;
 WITH selected_lines AS (
   SELECT DISTINCT g.line_id
   FROM goship_design_goship_1 AS g
-  WHERE g.shape IS NOT NULL
-    AND g.name IN ({{GOSHIP_LINE_NAMES_IN}})
+  WHERE ({{WHERE}})
     AND g.line_id IS NOT NULL
 )
 SELECT c.code2, COUNT(DISTINCT sl.line_id)::int AS line_count

@@ -56,6 +56,8 @@ export function printCombinedExportSummary(byNetwork, countsByLayer, config = {}
   process.stderr.write(`  OCEAN_GLIDERS_MIN_LOC_DATE: ${values.OCEAN_GLIDERS_MIN_LOC_DATE}\n`)
   process.stderr.write(`  ANIBOS_MIN_LOC_DATE: ${values.ANIBOS_MIN_LOC_DATE}\n`)
   process.stderr.write(`  FVON_MIN_LOC_DATE: ${values.FVON_MIN_LOC_DATE}\n`)
+  process.stderr.write(`  SOOP_XBT_SAMPLED_SINCE: ${values.SOOP_XBT_SAMPLED_SINCE}\n`)
+  process.stderr.write(`  GOSHIP_SAMPLED_SINCE: ${values.GOSHIP_SAMPLED_SINCE}\n`)
   process.stderr.write(`  GOSHIP_LINE_NAMES: ${values.GOSHIP_LINE_NAMES.length} lines\n`)
   process.stderr.write(`  SOOP_XBT_LINE_NAMES: ${values.SOOP_XBT_LINE_NAMES.length} lines\n\n`)
 }
