@@ -17,7 +17,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { formatDatabaseUrlForLog, loadDotEnv } from './databaseUrl.mjs'
-import { buildEditionMetadata, buildReportCardPlatformMetadata } from './editionMetadata.mjs'
+import { buildExportMetadata } from './editionMetadata.mjs'
 import { assertPsqlAvailable, runPsqlQuery } from './geojson-export/db.mjs'
 
 loadDotEnv()
@@ -168,37 +168,30 @@ export async function runGeojsonExport(argv = process.argv.slice(2), options = {
 
   if (!dryRun) {
     process.stderr.write(`\nWrote GeoJSON to ${path.relative(SIMPLE_MAP_ROOT, OUTPUT_DIR)}/\n`)
-    const metadata = buildEditionMetadata()
     const exportedAt = new Date().toISOString().slice(0, 10)
+    const exportMetadata = buildExportMetadata(exportedAt)
     const metadataPath = path.join(OUTPUT_DIR, 'export-metadata.json')
     fs.writeFileSync(
       metadataPath,
-      `${JSON.stringify(
-        {
-          ...metadata,
-          exportedAt,
-        },
-        null,
-        2
-      )}\n`,
+      `${JSON.stringify(exportMetadata, null, 2)}\n`,
       'utf8'
     )
     process.stderr.write(`  → ${path.relative(SIMPLE_MAP_ROOT, metadataPath)}\n`)
 
     const reportCardRoot = exportPaths.REPORT_CARD_ROOT
     if (fs.existsSync(reportCardRoot)) {
-      const platformMetadataPath = path.join(
+      const reportCardMetadataPath = path.join(
         reportCardRoot,
-        'public/edition/platform-metadata.json',
+        'public/edition/export-metadata.json',
       )
-      fs.mkdirSync(path.dirname(platformMetadataPath), { recursive: true })
+      fs.mkdirSync(path.dirname(reportCardMetadataPath), { recursive: true })
       fs.writeFileSync(
-        platformMetadataPath,
-        `${JSON.stringify(buildReportCardPlatformMetadata(exportedAt), null, 2)}\n`,
+        reportCardMetadataPath,
+        `${JSON.stringify(exportMetadata, null, 2)}\n`,
         'utf8'
       )
       process.stderr.write(
-        `  → ${path.relative(reportCardRoot, platformMetadataPath)} (report-card)\n`,
+        `  → ${path.relative(reportCardRoot, reportCardMetadataPath)} (report-card)\n`,
       )
     }
   }

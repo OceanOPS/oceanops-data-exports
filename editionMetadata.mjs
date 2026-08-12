@@ -17,8 +17,8 @@ export function buildEditionMetadata() {
   }
 }
 
-/** Report-card modal dates — same SQL-backed fields + export run date. */
-export function buildReportCardPlatformMetadata(asOfDate) {
+/** Full export metadata payload (SQL-backed fields + export run date). */
+export function buildExportMetadata(asOfDate) {
   return {
     exportedAt: asOfDate ?? new Date().toISOString().slice(0, 10),
     ...buildEditionMetadata(),
