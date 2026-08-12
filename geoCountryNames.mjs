@@ -21,7 +21,7 @@ export const GEO_COUNTRY_NAMES_BY_ISO = {
   HR: ['CROATIA'],
   CU: ['CUBA'],
   DK: ['DENMARK'],
-  EU: ['EUROPE'],
+  EU: ['EUMETNET', 'EUROPE'],
   FI: ['FINLAND'],
   FR: ['FRANCE'],
   DE: ['GERMANY'],
