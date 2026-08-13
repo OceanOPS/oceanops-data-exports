@@ -109,7 +109,7 @@ Line densification (manual, after editing `*_undensified.geojson` in simple-map)
 npm run densify:geojson -- ../oceanops-simple-map/public/geojson/goship_undensified.geojson ../oceanops-simple-map/public/geojson/goship.geojson
 ```
 
-Optional 3rd/4th args: `rhumb` (default) or `geodesic`, then `stepKm` (default 80). Implementation: `geojson-export/densifyLayer.mjs`.
+Optional 3rd/4th args: `hybrid` (default), `rhumb`, or `geodesic`, then `stepKm` (default 80). Implementation: `geojson-export/densifyLayer.mjs`.
 
 ## From app repos
 

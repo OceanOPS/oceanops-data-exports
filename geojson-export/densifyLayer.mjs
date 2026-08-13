@@ -5,53 +5,173 @@
 
 import * as turf from '@turf/turf'
 
+/** @typedef {'geodesic' | 'rhumb' | 'hybrid'} DensifyMode */
+
+/**
+ * @param {number} lon
+ * @returns {number}
+ */
+function normalizeLon(lon) {
+  return ((((lon + 180) % 360) + 360) % 360) - 180
+}
+
+/**
+ * Flatten nested coordinate arrays from turf greatCircle antimeridian splits.
+ *
+ * @param {unknown} coords
+ * @returns {[number, number][]}
+ */
+function flattenCoords(coords) {
+  /** @type {[number, number][]} */
+  const out = []
+
+  /** @param {unknown} value */
+  function walk(value) {
+    if (!Array.isArray(value) || value.length === 0) return
+    if (typeof value[0] === 'number' && typeof value[1] === 'number') {
+      out.push([normalizeLon(value[0]), value[1]])
+      return
+    }
+    for (const item of value) walk(item)
+  }
+
+  walk(coords)
+  return out
+}
+
+/**
+ * Geodesic for mid-latitude transects; rhumb for high-latitude east–west segments
+ * (avoids great-circle arcs cutting over Antarctica — prod behaviour).
+ *
+ * @param {[number, number]} a
+ * @param {[number, number]} b
+ * @returns {'geodesic' | 'rhumb'}
+ */
+export function chooseSegmentMode(a, b) {
+  const latA = a[1]
+  const latB = b[1]
+  const maxAbsLat = Math.max(Math.abs(latA), Math.abs(latB))
+  const latSpan = Math.abs(latA - latB)
+
+  let lonSpan = Math.abs(a[0] - b[0])
+  if (lonSpan > 180) lonSpan = 360 - lonSpan
+
+  const isEastWest = latSpan < 5 && lonSpan > 20
+  const isHighLat = maxAbsLat >= 55
+
+  if (isEastWest && isHighLat) return 'rhumb'
+  return 'geodesic'
+}
+
+/** @param {[number, number]} a @param {[number, number]} b */
+function isDatelineContinuation(a, b) {
+  const latTol = 0.5
+  if (Math.abs(a[1] - b[1]) > latTol) return false
+  return Math.abs(a[0]) > 170 && Math.abs(b[0]) > 170
+}
+
+/**
+ * Collapse MultiLineString parts split at ±180° on the same parallel (e.g. S04P).
+ *
+ * @param {number[][][]} parts
+ * @returns {number[][][]}
+ */
+export function mergeDatelineParts(parts) {
+  if (parts.length <= 1) return parts
+
+  /** @type {number[][][]} */
+  const merged = []
+  let i = 0
+
+  while (i < parts.length) {
+    let start = parts[i][0]
+    let end = parts[i][parts[i].length - 1]
+    let j = i + 1
+
+    while (j < parts.length) {
+      const nextPart = parts[j]
+      const nextStart = nextPart[0]
+      const nextEnd = nextPart[nextPart.length - 1]
+
+      if (isDatelineContinuation(end, nextStart)) {
+        end = nextEnd
+        j++
+      } else {
+        break
+      }
+    }
+
+    if (j === i + 1) {
+      merged.push(parts[i])
+    } else {
+      merged.push([start, end])
+    }
+
+    i = j
+  }
+
+  return merged
+}
+
 /**
  * @param {[number, number]} a
  * @param {[number, number]} b
- * @param {{ mode?: 'geodesic' | 'rhumb', stepKm?: number }} [options]
+ * @param {{ mode?: DensifyMode, stepKm?: number }} [options]
+ * @returns {[number, number][]}
  */
-function densifyPair(a, b, { mode = 'rhumb', stepKm = 100 } = {}) {
-  if (mode === 'geodesic') {
+function densifyPair(a, b, { mode = 'geodesic', stepKm = 100 } = {}) {
+  const segmentMode = mode === 'hybrid' ? chooseSegmentMode(a, b) : mode
+
+  if (segmentMode === 'geodesic') {
     const dist = turf.distance(a, b, { units: 'kilometers' })
     const n = Math.max(0, Math.ceil(dist / stepKm) - 1)
     if (n <= 0) return [b]
+
     const gc = turf.greatCircle(a, b, { npoints: n + 2 })
-    return gc.geometry.coordinates.slice(1)
+    const flat = flattenCoords(gc.geometry.coordinates)
+    if (flat.length <= 1) return [b]
+    return flat.slice(1)
   }
 
   const dist = turf.rhumbDistance(a, b, { units: 'kilometers' })
   const n = Math.max(0, Math.ceil(dist / stepKm) - 1)
   if (n <= 0) return [b]
+
   const bearing = turf.rhumbBearing(a, b)
+  /** @type {[number, number][]} */
   const out = []
   for (let i = 1; i <= n; i++) {
     const frac = i / (n + 1)
     const p = turf.rhumbDestination(a, dist * frac, bearing, { units: 'kilometers' })
-    out.push(p.geometry.coordinates)
+    out.push([normalizeLon(p.geometry.coordinates[0]), p.geometry.coordinates[1]])
   }
   out.push(b)
   return out
 }
 
-/** @param {number[][]} coords @param {{ mode?: 'geodesic' | 'rhumb', stepKm?: number }} [options] */
+/** @param {number[][]} coords @param {{ mode?: DensifyMode, stepKm?: number }} options */
 function densifyLineString(coords, options) {
   if (!coords || coords.length < 2) return coords ?? []
-  const out = [coords[0]]
+
+  /** @type {[number, number][]} */
+  const out = [[normalizeLon(coords[0][0]), coords[0][1]]]
+
   for (let i = 0; i < coords.length - 1; i++) {
-    out.push(...densifyPair(coords[i], coords[i + 1], options))
+    const a = out[out.length - 1]
+    const b = [normalizeLon(coords[i + 1][0]), coords[i + 1][1]]
+    out.push(...densifyPair(a, b, options))
   }
+
   return out
 }
 
 /**
  * @param {import('geojson').FeatureCollection} collection
- * @param {{ mode?: 'geodesic' | 'rhumb', stepKm?: number }} [options]
+ * @param {{ mode?: DensifyMode, stepKm?: number }} [options]
  * @returns {import('geojson').FeatureCollection}
  */
 export function densifyFeatureCollection(collection, options = {}) {
-  // Rhumb (loxodrome) matches ship transects and legacy densify.js; geodesic arcs
-  // bulge toward the pole and cut over Antarctica on long east–west segments.
-  const mode = options.mode ?? 'rhumb'
+  const mode = options.mode ?? 'hybrid'
   const stepKm = options.stepKm ?? 80
   const out = { type: 'FeatureCollection', features: [] }
 
@@ -67,7 +187,12 @@ export function densifyFeatureCollection(collection, options = {}) {
     }
 
     if (geometry.type === 'MultiLineString') {
-      for (const part of geometry.coordinates) {
+      const parts =
+        mode === 'hybrid'
+          ? mergeDatelineParts(geometry.coordinates)
+          : geometry.coordinates
+
+      for (const part of parts) {
         const coords = densifyLineString(part, { mode, stepKm })
         out.features.push(turf.lineString(coords, props))
       }
