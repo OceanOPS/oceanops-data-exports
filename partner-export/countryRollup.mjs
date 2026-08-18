@@ -9,11 +9,13 @@ export const EXCLUDED_PARTNER_ISO = new Set([
   'AQ',
   'UN',
   'UNKNOWN',
+  'U-',
 ])
 
 /** ISO codes merged into a single reporting row (values summed). */
 export const PARTNER_ISO_ROLLUP = {
   HK: 'CN',
+  EN: 'EU',
 }
 
 /**
