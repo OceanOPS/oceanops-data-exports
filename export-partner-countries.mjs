@@ -37,6 +37,7 @@ import {
   buildGeoCountryIndex,
   geoNamesForIso,
 } from './geoCountryNames.mjs'
+import { countContributingCountries } from './partner-export/countContributingCountries.mjs'
 
 /** @param {Record<string, Record<string, number>>} byNetwork */
 function mergeCountryCounts(byNetwork) {
@@ -103,8 +104,8 @@ function readExistingMetadata(filePath) {
   return meta
 }
 
-/** @param {Map<string, Record<string, number>>} countries @param {Record<string, { name?: string, countryCode?: string, description?: string }>} meta */
-function renderPartnerCountries(countries, meta) {
+/** @param {Map<string, Record<string, number>>} countries @param {Record<string, { name?: string, countryCode?: string, description?: string }>} meta @param {number} contributingCountries */
+function renderPartnerCountries(countries, meta, contributingCountries) {
   const generatedAt = new Date().toISOString().slice(0, 10)
 
   const sortedCodes = [...countries.keys()].sort((a, b) => {
@@ -177,11 +178,14 @@ export interface PartnerCountry {
 export const partnerCountries: PartnerCountry[] = [
 ${entries.join(',\n')}
 ]
+
+/** Globe/report filter countries (rollup + whitelist). Matches simple-map getFilterableCountryNames. */
+export const CONTRIBUTING_COUNTRIES = ${contributingCountries}
 `
 }
 
-/** @param {Map<string, Record<string, number>>} countries @param {Record<string, { name?: string, countryCode?: string, description?: string }>} meta */
-function renderPartnerCountriesJson(countries, meta) {
+/** @param {Map<string, Record<string, number>>} countries @param {Record<string, { name?: string, countryCode?: string, description?: string }>} meta @param {number} contributingCountries */
+function renderPartnerCountriesJson(countries, meta, contributingCountries) {
   const generatedAt = new Date().toISOString().slice(0, 10)
 
   const sortedCodes = [...countries.keys()].sort((a, b) => {
@@ -212,6 +216,7 @@ function renderPartnerCountriesJson(countries, meta) {
     generatedAt,
     edition: EXPORT_EDITION_LABEL,
     source: 'OceanOPS PostgreSQL partner export (sql/*.sql criteria)',
+    contributingCountries,
     countries: countryList,
     byGeoCountryName: buildGeoCountryIndex(countries, meta),
   }
@@ -260,12 +265,13 @@ export async function runPartnerExport(argv = process.argv.slice(2), options = {
       meta[code] = { ...meta[code], ...info }
     }
   }
-  for (const dropped of ['HK', 'AQ', 'UN']) {
+  for (const dropped of ['HK', 'EN', 'AQ', 'UN', 'U-']) {
     delete meta[dropped]
   }
 
-  const output = renderPartnerCountries(countries, meta)
-  const outputJson = renderPartnerCountriesJson(countries, meta)
+  const contributingCountries = countContributingCountries(countries)
+  const output = renderPartnerCountries(countries, meta, contributingCountries)
+  const outputJson = renderPartnerCountriesJson(countries, meta, contributingCountries)
 
   if (dryRun) {
     process.stdout.write(output)
@@ -279,11 +285,13 @@ export async function runPartnerExport(argv = process.argv.slice(2), options = {
 
   fs.mkdirSync(path.dirname(OUTPUT), { recursive: true })
   fs.writeFileSync(OUTPUT, output, 'utf8')
-  process.stderr.write(`Wrote ${OUTPUT} (${countries.size} countries)\n`)
+  process.stderr.write(
+    `Wrote ${OUTPUT} (${countries.size} ISO rows, ${contributingCountries} contributing countries)\n`,
+  )
 
   fs.mkdirSync(path.dirname(OUTPUT_JSON), { recursive: true })
   fs.writeFileSync(OUTPUT_JSON, `${JSON.stringify(outputJson, null, 2)}\n`, 'utf8')
-  process.stderr.write(`Wrote ${OUTPUT_JSON}\n`)
+  process.stderr.write(`Wrote ${OUTPUT_JSON} (contributingCountries: ${contributingCountries})\n`)
 
   if (!noSummary) {
     printExportCriteriaSummary(byNetwork, { EXPORT_EDITION_LABEL })
