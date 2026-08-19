@@ -25,7 +25,7 @@ export const NETWORK_CRITERIA = {
   fvon: { summary: 'FVON — layer-table statuses + latest_loc_date cutoff', layerId: 'fvon', sqlSource: 'ptf_loc_n' },
   sotVos: { summary: 'OPERATIONAL SOT/VOS ships', layerId: 'vos', sqlSource: 'ptf_loc_n' },
   sotAsap: { summary: 'OPERATIONAL ASAP ships', layerId: 'asap', sqlSource: 'ptf_loc_n' },
-  sot: { summary: 'SOOP XBT design lines — name list, cruise departure >= SOOP_XBT_SAMPLED_SINCE', layerId: 'ship_oceano', sqlSource: 'line_program' },
+  sot: { summary: 'SOOP XBT design lines — name list, cruise departure >= SOOP_XBT_SAMPLED_SINCE', layerId: 'ship_oceano', sqlSource: 'cruise_program' },
   goShip: { summary: 'GO-SHIP design lines — name list, cruise departure >= GOSHIP_SAMPLED_SINCE', layerId: 'goship', sqlSource: 'cruise_program' },
   gloss: { summary: 'OPERATIONAL GLOSS sea-level gauges', layerId: 'gloss', sqlSource: 'ptf_loc_n' },
   oceanSites: { summary: 'OceanSITES moorings — OPERATIONAL or INACTIVE', layerId: 'oceansites', sqlSource: 'ptf_loc_n' },

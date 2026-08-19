@@ -59,5 +59,15 @@ export function printCombinedExportSummary(byNetwork, countsByLayer, config = {}
   process.stderr.write(`  SOOP_XBT_SAMPLED_SINCE: ${values.SOOP_XBT_SAMPLED_SINCE}\n`)
   process.stderr.write(`  GOSHIP_SAMPLED_SINCE: ${values.GOSHIP_SAMPLED_SINCE}\n`)
   process.stderr.write(`  GOSHIP_LINE_NAMES: ${values.GOSHIP_LINE_NAMES.length} lines\n`)
-  process.stderr.write(`  SOOP_XBT_LINE_NAMES: ${values.SOOP_XBT_LINE_NAMES.length} lines\n\n`)
+  process.stderr.write(`  SOOP_XBT_LINE_NAMES: ${values.SOOP_XBT_LINE_NAMES.length} lines\n`)
+  process.stderr.write(`  OBS_DAYS_WINDOW: ${values.OBS_DAYS_WINDOW}\n`)
+
+  if (config.obsStats) {
+    process.stderr.write('\nObservations per day (stat4)\n')
+    process.stderr.write(`  Avg (hierarchy, rolling): ${config.obsStats.avgObsPerDay}\n`)
+    process.stderr.write(`  Window: ${config.obsStats.daysWindow} days\n`)
+    process.stderr.write(`  Days with data: ${config.obsStats.daysWithData}\n`)
+    process.stderr.write(`  Total obs in window: ${config.obsStats.totalObs}\n`)
+    process.stderr.write('  Source: observations-export/queries.mjs\n\n')
+  }
 }

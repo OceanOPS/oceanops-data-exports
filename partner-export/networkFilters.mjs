@@ -1,5 +1,5 @@
 /**
- * Partner export network keys (line-based networks use line_program in PostgreSQL).
+ * Partner export network keys (line-based networks use cruise_program in PostgreSQL).
  */
 
 export const NETWORK_KEYS = [
