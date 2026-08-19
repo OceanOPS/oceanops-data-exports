@@ -1,0 +1,169 @@
+/**
+ * Per-network observation counts aligned with source hierarchy (stat4 methodology).
+ * GTS MF networks from obs + GDAC/IOOS/VOTO gliders, AniBOS, FVON, tsunami OSMC.
+ */
+
+import { sqlDailyCounts, formatIsoDate } from './queries.mjs'
+import {
+  GTS_NETWORKS,
+  yoyPeriodForYear,
+  summarizeDailyCounts,
+  computeDelta,
+  sqlGtsNetworkDailyCounts,
+} from './gtsNetworkQueries.mjs'
+
+/** @typedef {{ id: string, label: string, source: string, table: string, extraWhere: string }} HierarchyNetworkDef */
+
+/** GTS MF obs subsets (hierarchy excludes Argo/Gliders/Tsunami from obs). */
+const GTS_OBS_NETWORKS = GTS_NETWORKS.filter(
+  (n) => n.table === 'oceanops.obs' && !['argo'].includes(n.id),
+)
+
+/** @type {HierarchyNetworkDef[]} */
+export const HIERARCHY_NETWORKS = [
+  ...GTS_OBS_NETWORKS.map((n) => ({
+    id: n.id,
+    label: n.label,
+    source: n.gtsSource,
+    table: n.table,
+    extraWhere: n.extraWhere,
+  })),
+  {
+    id: 'argo-gdac',
+    label: 'Argo (GDAC)',
+    source: 'GDAC',
+    table: 'oceanops.obs_argo_gdac',
+    extraWhere: '',
+  },
+  {
+    id: 'gliders-gdac',
+    label: 'OceanGliders (GDAC)',
+    source: 'GDAC',
+    table: 'oceanops.obs_gliders_gdac',
+    extraWhere: '',
+  },
+  {
+    id: 'gliders-ioos',
+    label: 'OceanGliders (IOOS)',
+    source: 'IOOS',
+    table: 'oceanops.obs_gliders_ioos',
+    extraWhere: '',
+  },
+  {
+    id: 'gliders-voto',
+    label: 'OceanGliders (VOTO)',
+    source: 'VOTO',
+    table: 'oceanops.obs_gliders_voto',
+    extraWhere: '',
+  },
+  {
+    id: 'tsunameter',
+    label: 'DBCP tsunameter buoys',
+    source: 'GTS OSMC',
+    table: 'oceanops.obs_tsuna_gts_osmc',
+    extraWhere: GTS_NETWORKS.find((n) => n.id === 'tsunameter')?.extraWhere ?? '',
+  },
+  {
+    id: 'anibos',
+    label: 'AniBOS',
+    source: 'AniBOS/MEOP',
+    table: 'oceanops.obs_anibos_meop',
+    extraWhere: '',
+  },
+  {
+    id: 'fvon',
+    label: 'FVON (fishing vessels)',
+    source: 'FishyData',
+    table: 'oceanops.obs_fishingvessel_fishydata',
+    extraWhere: '',
+  },
+]
+
+/**
+ * @param {HierarchyNetworkDef} network
+ * @param {{ sinceSql: string, untilSql: string }} period
+ */
+export function sqlHierarchyNetworkDailyCounts(network, period) {
+  return sqlDailyCounts(
+    network.table,
+    period.sinceSql,
+    period.untilSql,
+    network.extraWhere,
+  )
+}
+
+/**
+ * Rolling window ending on endDate vs same window one year earlier.
+ * @param {{ daysWindow: number, endDate?: Date }} range
+ */
+export function rollingYoyPeriods(range) {
+  const endDate = range.endDate ?? new Date()
+  const daysWindow = range.daysWindow
+  const currentStart = new Date(endDate)
+  currentStart.setDate(currentStart.getDate() - daysWindow)
+  const previousEnd = new Date(endDate)
+  previousEnd.setFullYear(previousEnd.getFullYear() - 1)
+  const previousStart = new Date(previousEnd)
+  previousStart.setDate(previousStart.getDate() - daysWindow)
+
+  const toPeriod = (start, end) => ({
+    sinceSql: `'${formatIsoDate(start)}'::timestamp`,
+    untilSql: `(('${formatIsoDate(end)}'::date + INTERVAL '1 day')::timestamp)`,
+    label: `${formatIsoDate(start)} → ${formatIsoDate(end)}`,
+  })
+
+  return {
+    current: toPeriod(currentStart, endDate),
+    previous: toPeriod(previousStart, previousEnd),
+    currentEndDate: endDate,
+    previousEndDate: previousEnd,
+    previousYear: endDate.getFullYear() - 1,
+  }
+}
+
+/**
+ * @param {{ daysWindow?: number, year?: number, endDate?: Date }} range
+ * @param {Date} [referenceDate]
+ */
+export function buildHierarchyNetworkYoySteps(range, referenceDate = new Date()) {
+  let current
+  let previous
+  let previousYear
+  let currentYear
+
+  if (range.year) {
+    currentYear = range.year
+    previousYear = range.year - 1
+    current = yoyPeriodForYear(currentYear, currentYear, referenceDate)
+    previous = yoyPeriodForYear(previousYear, currentYear, referenceDate)
+  } else {
+    const daysWindow = range.daysWindow ?? 365
+    const periods = rollingYoyPeriods({ daysWindow, endDate: range.endDate ?? referenceDate })
+    current = periods.current
+    previous = periods.previous
+    currentYear = periods.currentEndDate.getFullYear()
+    previousYear = periods.previousYear
+  }
+
+  /** @type {{ label: string, sql: string, period: 'current' | 'previous', networkId: string }[]} */
+  const steps = []
+
+  for (const network of HIERARCHY_NETWORKS) {
+    steps.push({
+      networkId: network.id,
+      period: 'current',
+      label: `${network.label} (${network.source}) current`,
+      sql: sqlHierarchyNetworkDailyCounts(network, current),
+    })
+    steps.push({
+      networkId: network.id,
+      period: 'previous',
+      label: `${network.label} (${network.source}) previous`,
+      sql: sqlHierarchyNetworkDailyCounts(network, previous),
+    })
+  }
+
+  return { steps, current, previous, currentYear, previousYear }
+}
+
+export { summarizeDailyCounts, computeDelta, sqlGtsNetworkDailyCounts, GTS_NETWORKS }

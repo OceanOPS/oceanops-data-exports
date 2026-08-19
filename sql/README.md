@@ -26,6 +26,6 @@ Each `*.sql` file holds the edition filter **once** and two runnable queries:
 
 4. `npm run export:all` (with `OCEANOPS_DATABASE_URL` set).
 
-**Observations per day (report card stat4):** read-only step queries in `observations-export/queries.mjs` (source hierarchy, `COUNT(*)` per table, sum in Node). Reference single-query: `sql/observations_per_day.sql`. Export: `npm run export:observations`.
+**Observations per day (report card stat4):** read-only step queries in `observations-export/queries.mjs` (source hierarchy, `COUNT(*)` per table, sum in Node). Reference single-query: `sql/observations_per_day.sql`. Export: `npm run export:observations` (also writes YoY delta to `editionStats.ts`, per-network breakdown to `observations-network-yoy.json`, included in `export:all`). Skip network YoY with `--skip-network-yoy`.
 
 Copy from `_template_point.sql` or `_template_line.sql` when adding a layer; register in `geojson-export/layers.manifest.json`.

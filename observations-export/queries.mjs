@@ -92,10 +92,24 @@ export function obsChunkLabel(obsFilter) {
   }
 }
 
-/** @param {number} daysWindow @returns {{ label: string, fromSql: string, toSql: string }[]} */
-export function obsMonthChunks(daysWindow) {
-  const since = `(CURRENT_DATE - INTERVAL '${daysWindow} days')`
-  const until = `(CURRENT_DATE + INTERVAL '1 day')`
+/** @param {Date} date */
+export function formatIsoDate(date) {
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+/**
+ * @param {number} daysWindow
+ * @param {Date} endDate inclusive end (defaults to today)
+ * @returns {{ label: string, fromSql: string, toSql: string }[]}
+ */
+export function obsMonthChunks(daysWindow, endDate = new Date()) {
+  const endIso = formatIsoDate(endDate)
+  const startDate = new Date(endDate)
+  startDate.setDate(startDate.getDate() - daysWindow)
+  const startIso = formatIsoDate(startDate)
+  const since = `'${startIso}'::timestamp`
+  const until = `(('${endIso}'::date + INTERVAL '1 day')::timestamp)`
 
   if (daysWindow <= 31) {
     return [{ label: `${daysWindow}-day window`, fromSql: since, toSql: until }]
@@ -117,13 +131,20 @@ export function obsMonthChunks(daysWindow) {
 }
 
 /**
- * @param {{ daysWindow?: number, year?: number }} range
- * @returns {{ label: string, obsChunks: { label: string, fromSql: string, toSql: string }[], since: string, until: string | null, rangeLabel: string }}
+ * @param {{ daysWindow?: number, year?: number, endDate?: Date }} range
+ * @returns {{ label: string, obsChunks: { label: string, fromSql: string, toSql: string }[], since: string, until: string | null, rangeLabel: string, endDate: Date }}
  */
 export function resolveObservationRange(range) {
+  const endDate = range.endDate ?? new Date()
+
   if (range.year) {
     const year = range.year
-    const since = `'${year}-01-01'::timestamp`
+    const periodStart = `${year}-01-01`
+    const periodEnd =
+      year === endDate.getFullYear()
+        ? formatIsoDate(endDate)
+        : `${year}-12-31`
+    const since = `'${periodStart}'::timestamp`
     const until = `'${year + 1}-01-01'::timestamp`
     return {
       label: String(year),
@@ -131,16 +152,28 @@ export function resolveObservationRange(range) {
       since,
       until,
       rangeLabel: `calendar year ${year}`,
+      endDate: new Date(`${periodEnd}T12:00:00`),
+      periodStart,
+      periodEnd,
     }
   }
 
   const daysWindow = range.daysWindow ?? 365
+  const startDate = new Date(endDate)
+  startDate.setDate(startDate.getDate() - daysWindow)
+  const periodStart = formatIsoDate(startDate)
+  const periodEnd = formatIsoDate(endDate)
+  const since = `'${periodStart}'::timestamp`
+  const until = `(('${periodEnd}'::date + INTERVAL '1 day')::timestamp)`
   return {
     label: `${daysWindow}-day`,
-    obsChunks: obsMonthChunks(daysWindow),
-    since: `(CURRENT_DATE - INTERVAL '${daysWindow} days')::timestamp`,
-    until: null,
-    rangeLabel: `rolling ${daysWindow}-day window`,
+    obsChunks: obsMonthChunks(daysWindow, endDate),
+    since,
+    until,
+    rangeLabel: `rolling ${daysWindow}-day window ending ${periodEnd}`,
+    endDate,
+    periodStart,
+    periodEnd,
   }
 }
 
@@ -165,7 +198,7 @@ ORDER BY 1
 }
 
 /**
- * @param {{ daysWindow?: number, year?: number, obsFilter?: ObsFilter }} [opts]
+ * @param {{ daysWindow?: number, year?: number, endDate?: Date, obsFilter?: ObsFilter }} [opts]
  */
 export function buildObservationSteps(opts = {}) {
   const obsFilter = opts.obsFilter ?? 'hierarchy'
@@ -195,7 +228,7 @@ export function buildObservationSteps(opts = {}) {
   for (const [label, table] of hierarchySources) {
     steps.push({
       label,
-      sql: sqlDailyCounts(table, since, until),
+      sql: sqlDailyCounts(table, since, until ?? null),
     })
   }
 
