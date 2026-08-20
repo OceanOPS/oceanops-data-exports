@@ -59,5 +59,6 @@ if (!arg) {
 if (arg === 'all' || arg === 'geojson' || arg === 'partners') {
   renderBatch(arg)
 } else {
-  process.stdout.write(`${renderNetworkSqlFileForPgAdmin(resolveSqlPath(arg))}\n`)
+  const filePath = resolveSqlPath(arg)
+  process.stdout.write(`${renderNetworkSqlFileForPgAdmin(filePath)}\n`)
 }

@@ -32,3 +32,29 @@ export function countContributingCountries(countries) {
 
   return count
 }
+
+/**
+ * ISO codes for contributing countries (same rules as countContributingCountries).
+ * @param {Map<string, Record<string, number>>} countries
+ * @returns {string[]}
+ */
+export function listContributingCountryIsos(countries) {
+  /** @type {Record<string, string>} */
+  const byGeo = {}
+
+  for (const iso of countries.keys()) {
+    for (const geo of geoNamesForIso(iso)) {
+      byGeo[geo] = iso
+    }
+  }
+
+  /** @type {string[]} */
+  const isos = []
+  for (const geo of FILTERABLE_GEO_COUNTRIES) {
+    const iso = byGeo[geo]
+    if (!iso || !countries.has(iso)) continue
+    if (countryTotal(countries.get(iso)) > 0) isos.push(iso)
+  }
+
+  return [...new Set(isos)].sort()
+}

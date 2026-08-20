@@ -7,6 +7,9 @@
   "scripts": {
     "export:partners": "node export-partner-countries.mjs",
     "export:partners:dry-run": "node export-partner-countries.mjs --dry-run",
+    "export:partner-countries": "node export-partner-countries.mjs",
+    "export:partner-countries:dry-run": "node export-partner-countries.mjs --dry-run",
+    "bootstrap:contributing-countries-baseline": "node bootstrap-contributing-countries-baseline.mjs",
     "export:geojson": "node export-geojson.mjs",
     "export:geojson:dry-run": "node export-geojson.mjs --dry-run",
     "export:observations": "node export-observations-per-day.mjs",

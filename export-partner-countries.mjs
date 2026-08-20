@@ -37,7 +37,7 @@ import {
   buildGeoCountryIndex,
   geoNamesForIso,
 } from './geoCountryNames.mjs'
-import { countContributingCountries } from './partner-export/countContributingCountries.mjs'
+import { countContributingCountries, listContributingCountryIsos } from './partner-export/countContributingCountries.mjs'
 
 /** @param {Record<string, Record<string, number>>} byNetwork */
 function mergeCountryCounts(byNetwork) {
@@ -280,8 +280,10 @@ export async function runPartnerExport(argv = process.argv.slice(2), options = {
     if (!noSummary) {
       printExportCriteriaSummary(byNetwork, { EXPORT_EDITION_LABEL })
     }
-    return { byNetwork }
+    return { byNetwork, countries, meta, contributingCountries }
   }
+
+  const contributingIsos = listContributingCountryIsos(countries)
 
   fs.mkdirSync(path.dirname(OUTPUT), { recursive: true })
   fs.writeFileSync(OUTPUT, output, 'utf8')
@@ -293,11 +295,91 @@ export async function runPartnerExport(argv = process.argv.slice(2), options = {
   fs.writeFileSync(OUTPUT_JSON, `${JSON.stringify(outputJson, null, 2)}\n`, 'utf8')
   process.stderr.write(`Wrote ${OUTPUT_JSON} (contributingCountries: ${contributingCountries})\n`)
 
+  if (fs.existsSync(exportPaths.REPORT_CARD_ROOT)) {
+    writeContributingCountriesYoy(exportPaths.REPORT_CARD_ROOT, contributingIsos)
+  }
+
   if (!noSummary) {
     printExportCriteriaSummary(byNetwork, { EXPORT_EDITION_LABEL })
   }
 
-  return { byNetwork }
+  return { byNetwork, countries, contributingCountries }
+}
+
+/**
+ * @param {string} reportCardRoot
+ * @param {string[]} currentIsos
+ */
+function writeContributingCountriesYoy(reportCardRoot, currentIsos) {
+  const editionDir = path.join(reportCardRoot, 'public/edition')
+  const baselinePath = path.join(editionDir, 'contributing-countries-baseline.json')
+  const snapshotPath = path.join(editionDir, 'contributing-countries-snapshot.json')
+  const yoyPath = path.join(editionDir, 'contributing-countries-yoy.json')
+
+  /** @type {string[]} */
+  let previousIsos = []
+  let previousYear = '2025'
+  let previousSource = 'none'
+
+  if (fs.existsSync(baselinePath)) {
+    const baseline = JSON.parse(fs.readFileSync(baselinePath, 'utf8'))
+    previousIsos = baseline.isos ?? []
+    previousYear = String(baseline.year ?? previousYear)
+    previousSource = 'baseline'
+  } else if (fs.existsSync(snapshotPath)) {
+    const snapshot = JSON.parse(fs.readFileSync(snapshotPath, 'utf8'))
+    previousIsos = snapshot.isos ?? []
+    previousYear = String(snapshot.year ?? previousYear)
+    previousSource = 'snapshot'
+  }
+
+  const prevSet = new Set(previousIsos)
+  const currSet = new Set(currentIsos)
+  const appeared = currentIsos.filter((iso) => !prevSet.has(iso))
+  const disappeared = previousIsos.filter((iso) => !currSet.has(iso))
+
+  const baselineMissing = previousIsos.length === 0
+
+  const payload = {
+    exportedAt: new Date().toISOString().slice(0, 10),
+    previousYear,
+    previousSource,
+    baselineMissing,
+    currentCount: currentIsos.length,
+    previousCount: previousIsos.length,
+    delta: currentIsos.length - previousIsos.length,
+    appeared: baselineMissing
+      ? []
+      : appeared.map((iso) => ({
+          iso,
+          name: ISO_COUNTRY_NAMES[iso] ?? iso,
+        })),
+    disappeared: baselineMissing
+      ? []
+      : disappeared.map((iso) => ({
+          iso,
+          name: ISO_COUNTRY_NAMES[iso] ?? iso,
+        })),
+  }
+
+  fs.mkdirSync(editionDir, { recursive: true })
+  fs.writeFileSync(yoyPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8')
+  fs.writeFileSync(
+    snapshotPath,
+    `${JSON.stringify(
+      {
+        exportedAt: payload.exportedAt,
+        year: new Date().getFullYear(),
+        isos: currentIsos,
+      },
+      null,
+      2,
+    )}\n`,
+    'utf8',
+  )
+  process.stderr.write(
+    `  → ${path.relative(reportCardRoot, yoyPath)} (+${appeared.length} / −${disappeared.length})\n`,
+  )
 }
 
 async function main() {
