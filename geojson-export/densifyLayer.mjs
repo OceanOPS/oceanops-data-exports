@@ -166,6 +166,49 @@ function densifyLineString(coords, options) {
 }
 
 /**
+ * Split a densified line at antimeridian jumps so 3D dashed line symbols
+ * do not draw straight chords over the pole (path tubes tolerate the jump).
+ *
+ * @param {number[][]} coords
+ * @returns {number[][][]}
+ */
+export function splitAtAntimeridian(coords) {
+  if (!coords || coords.length < 2) return coords?.length ? [coords] : []
+
+  /** @type {number[][][]} */
+  const parts = []
+  /** @type {number[][]} */
+  let current = [coords[0]]
+
+  for (let i = 1; i < coords.length; i++) {
+    const prev = current[current.length - 1]
+    const next = coords[i]
+    const dlon = next[0] - prev[0]
+
+    if (Math.abs(dlon) > 180) {
+      if (current.length >= 2) parts.push(current)
+      current = [next]
+    } else {
+      current.push(next)
+    }
+  }
+
+  if (current.length >= 2) parts.push(current)
+  return parts
+}
+
+/** @param {number[][][]} parts @param {Record<string, unknown>} props */
+function pushLineFeature(out, parts, props) {
+  const valid = parts.filter((part) => part.length >= 2)
+  if (valid.length === 0) return
+  if (valid.length === 1) {
+    out.features.push(turf.lineString(valid[0], props))
+  } else {
+    out.features.push(turf.multiLineString(valid, props))
+  }
+}
+
+/**
  * @param {import('geojson').FeatureCollection} collection
  * @param {{ mode?: DensifyMode, stepKm?: number }} [options]
  * @returns {import('geojson').FeatureCollection}
@@ -182,20 +225,18 @@ export function densifyFeatureCollection(collection, options = {}) {
 
     if (geometry.type === 'LineString') {
       const coords = densifyLineString(geometry.coordinates, { mode, stepKm })
-      out.features.push(turf.lineString(coords, props))
+      pushLineFeature(out, splitAtAntimeridian(coords), props)
       continue
     }
 
     if (geometry.type === 'MultiLineString') {
-      const parts =
-        mode === 'hybrid'
-          ? mergeDatelineParts(geometry.coordinates)
-          : geometry.coordinates
-
-      for (const part of parts) {
+      /** @type {number[][][]} */
+      const parts = []
+      for (const part of geometry.coordinates) {
         const coords = densifyLineString(part, { mode, stepKm })
-        out.features.push(turf.lineString(coords, props))
+        parts.push(...splitAtAntimeridian(coords))
       }
+      pushLineFeature(out, parts, props)
       continue
     }
 

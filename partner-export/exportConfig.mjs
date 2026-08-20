@@ -26,7 +26,7 @@ export const NETWORK_CRITERIA = {
   sotVos: { summary: 'OPERATIONAL SOT/VOS ships', layerId: 'vos', sqlSource: 'ptf_loc_n' },
   sotAsap: { summary: 'OPERATIONAL ASAP ships', layerId: 'asap', sqlSource: 'ptf_loc_n' },
   sot: { summary: 'SOOP XBT design lines — name list, cruise departure >= SOOP_XBT_SAMPLED_SINCE', layerId: 'ship_oceano', sqlSource: 'cruise_program' },
-  goShip: { summary: 'GO-SHIP design lines — name list, cruise departure >= GOSHIP_SAMPLED_SINCE', layerId: 'goship', sqlSource: 'cruise_program' },
+  goShip: { summary: 'GO-SHIP — line_type <> Associated, name <> P03; partner counts = cruises in edition window', layerId: 'goship', sqlSource: 'cruise_program' },
   gloss: { summary: 'OPERATIONAL GLOSS sea-level gauges', layerId: 'gloss', sqlSource: 'ptf_loc_n' },
   oceanSites: { summary: 'OceanSITES moorings — OPERATIONAL or INACTIVE', layerId: 'oceansites', sqlSource: 'ptf_loc_n' },
   mooredBuoys: { summary: 'OPERATIONAL moored buoys (excl. OceanSITES)', layerId: 'moored_buoys', sqlSource: 'ptf_loc_n' },
@@ -63,8 +63,10 @@ export function printExportCriteriaSummary(byNetwork, config = {}) {
   process.stderr.write(`  ANIBOS_MIN_LOC_DATE: ${values.ANIBOS_MIN_LOC_DATE}\n`)
   process.stderr.write(`  FVON_MIN_LOC_DATE: ${values.FVON_MIN_LOC_DATE}\n`)
   process.stderr.write(`  SOOP_XBT_SAMPLED_SINCE: ${values.SOOP_XBT_SAMPLED_SINCE}\n`)
-  process.stderr.write(`  GOSHIP_SAMPLED_SINCE: ${values.GOSHIP_SAMPLED_SINCE}\n`)
-  process.stderr.write(`  GOSHIP_LINE_NAMES: ${values.GOSHIP_LINE_NAMES.length} lines\n`)
+  process.stderr.write(`  GOSHIP_EDITION_SINCE: ${values.GOSHIP_EDITION_SINCE}\n`)
+  process.stderr.write(`  GOSHIP_RECENT_SINCE: ${values.GOSHIP_RECENT_SINCE}\n`)
+  process.stderr.write(`  GOSHIP_DECADAL_SINCE: ${values.GOSHIP_DECADAL_SINCE}\n`)
+  process.stderr.write(`  GOSHIP_DECADAL_UNTIL: ${values.GOSHIP_DECADAL_UNTIL}\n`)
   process.stderr.write(`  SOOP_XBT_LINE_NAMES: ${values.SOOP_XBT_LINE_NAMES.length} lines\n\n`)
 }
 

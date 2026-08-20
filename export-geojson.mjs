@@ -18,6 +18,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { formatDatabaseUrlForLog, loadDotEnv } from './databaseUrl.mjs'
 import { buildExportMetadata } from './editionMetadata.mjs'
+import { setExportAsOfDate } from './editionValues.mjs'
 import { assertPsqlAvailable, runPsqlQuery } from './geojson-export/db.mjs'
 
 loadDotEnv()
@@ -148,6 +149,9 @@ export async function runGeojsonExport(argv = process.argv.slice(2), options = {
   if (layerIds.length === 0) {
     throw new Error('No layers selected for export')
   }
+
+  const exportedAt = new Date().toISOString().slice(0, 10)
+  setExportAsOfDate(exportedAt)
 
   process.stderr.write(`GeoJSON export (${EXPORT_EDITION_LABEL})\n`)
   process.stderr.write(`Database: ${formatDatabaseUrlForLog()}\n`)

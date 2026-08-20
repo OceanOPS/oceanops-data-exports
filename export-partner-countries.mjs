@@ -38,6 +38,7 @@ import {
   geoNamesForIso,
 } from './geoCountryNames.mjs'
 import { countContributingCountries, listContributingCountryIsos } from './partner-export/countContributingCountries.mjs'
+import { setExportAsOfDate } from './editionValues.mjs'
 
 /** @param {Record<string, Record<string, number>>} byNetwork */
 function mergeCountryCounts(byNetwork) {
@@ -247,6 +248,8 @@ export async function runPartnerExport(argv = process.argv.slice(2), options = {
   if (!assertPsqlAvailable()) {
     throw new Error('Partner export requires psql on PATH')
   }
+
+  setExportAsOfDate(new Date().toISOString().slice(0, 10))
 
   process.stderr.write(`Exporting partner counts from PostgreSQL (${formatDatabaseUrlForLog()})…\n`)
   const byNetwork = exportCountsFromDatabase()

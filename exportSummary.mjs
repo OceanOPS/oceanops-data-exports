@@ -57,8 +57,10 @@ export function printCombinedExportSummary(byNetwork, countsByLayer, config = {}
   process.stderr.write(`  ANIBOS_MIN_LOC_DATE: ${values.ANIBOS_MIN_LOC_DATE}\n`)
   process.stderr.write(`  FVON_MIN_LOC_DATE: ${values.FVON_MIN_LOC_DATE}\n`)
   process.stderr.write(`  SOOP_XBT_SAMPLED_SINCE: ${values.SOOP_XBT_SAMPLED_SINCE}\n`)
-  process.stderr.write(`  GOSHIP_SAMPLED_SINCE: ${values.GOSHIP_SAMPLED_SINCE}\n`)
-  process.stderr.write(`  GOSHIP_LINE_NAMES: ${values.GOSHIP_LINE_NAMES.length} lines\n`)
+  process.stderr.write(`  GOSHIP_EDITION_SINCE: ${values.GOSHIP_EDITION_SINCE}\n`)
+  process.stderr.write(`  GOSHIP_RECENT_SINCE: ${values.GOSHIP_RECENT_SINCE}\n`)
+  process.stderr.write(`  GOSHIP_DECADAL_SINCE: ${values.GOSHIP_DECADAL_SINCE}\n`)
+  process.stderr.write(`  GOSHIP_DECADAL_UNTIL: ${values.GOSHIP_DECADAL_UNTIL}\n`)
   process.stderr.write(`  SOOP_XBT_LINE_NAMES: ${values.SOOP_XBT_LINE_NAMES.length} lines\n`)
   process.stderr.write(`  OBS_DAYS_WINDOW: ${values.OBS_DAYS_WINDOW}\n`)
 

@@ -7,7 +7,8 @@
 -- Use alias `g` in @where / @geojson / @partner so {{WHERE}} is shared (like point layers with `t`).
 
 -- @where
-g.shape IS NOT NULL AND g.name IN ({{GOSHIP_LINE_NAMES_IN}})
+g.shape IS NOT NULL
+-- Example line-list filter: AND g.name IN ({{SOOP_XBT_LINE_NAMES_IN}})
 
 -- @geojson
 SELECT jsonb_build_object(

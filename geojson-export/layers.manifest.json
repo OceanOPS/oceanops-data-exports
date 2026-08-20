@@ -76,7 +76,7 @@
       "geometryKind": "line",
       "category": "goship",
       "sourceTable": "oceanops_gis.goship_design_goship_1",
-      "summary": "GO-SHIP design lines — name list, cruise departure >= GOSHIP_SAMPLED_SINCE",
+      "summary": "GO-SHIP — 53 design lines; solid = sampled since 2025; dashed = not sampled since 2025",
       "densify": true
     },
     "ship_oceano": {
