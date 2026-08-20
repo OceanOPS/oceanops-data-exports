@@ -6,6 +6,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { NETWORK_KEYS } from '../partner-export/networkFilters.mjs'
+import { renderEditionSummary } from '../editionValues.mjs'
 import {
   formatGeojsonSqlHint,
   GEOJSON_SQL_SOURCE,
@@ -97,7 +98,9 @@ export function printExportSummary(countsByLayer) {
     const count = countsByLayer[layerId] ?? 0
     const partnerKey = LAYER_ID_TO_PARTNER_KEY[layerId] ?? layerId
     const sqlSource = GEOJSON_SQL_SOURCE[layerId] ?? 'ptf_loc_n'
-    process.stderr.write(`  ${partnerKey}: ${count} features — ${entry.summary}\n`)
+    process.stderr.write(
+      `  ${partnerKey}: ${count} features — ${renderEditionSummary(entry.summary)}\n`,
+    )
     process.stderr.write(`    SQL hint: ${formatGeojsonSqlHint(layerId, sqlSource)}\n`)
     process.stderr.write(`    SQL: sql/${layerId}.sql\n`)
   }

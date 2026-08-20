@@ -2,7 +2,7 @@
  * Combined partner + GeoJSON export summary (single block for export:all).
  */
 
-import { loadEditionValues } from './editionValues.mjs'
+import { loadEditionValues, renderEditionSummary } from './editionValues.mjs'
 import { LAYER_MANIFEST } from './geojson-export/exportConfig.mjs'
 import {
   EXPORT_EDITION_LABEL,
@@ -34,7 +34,7 @@ export function printCombinedExportSummary(byNetwork, countsByLayer, config = {}
 
     process.stderr.write(`${partnerKey} · ${layerId}\n`)
     process.stderr.write(`  Partner total: ${partnerTotal}  |  GeoJSON features: ${geojsonFeatures}\n`)
-    process.stderr.write(`  ${summary}\n`)
+    process.stderr.write(`  ${renderEditionSummary(summary)}\n`)
 
     const geoSource = GEOJSON_SQL_SOURCE[layerId] ?? 'ptf_loc_n'
     const partnerHint = formatNetworkSqlHint(layerId, sqlSource)

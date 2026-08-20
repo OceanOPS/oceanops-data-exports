@@ -4,7 +4,7 @@
  * SQL: sql/{layerId}.sql — @partner section (filter in @where).
  */
 
-import { loadEditionValues } from '../editionValues.mjs'
+import { loadEditionValues, renderEditionSummary } from '../editionValues.mjs'
 import { formatNetworkSqlHint, PARTNER_KEY_TO_LAYER_ID } from '../networkSql.mjs'
 import { NETWORK_KEYS } from './networkFilters.mjs'
 
@@ -52,7 +52,7 @@ export function printExportCriteriaSummary(byNetwork, config = {}) {
     if (!criteria) continue
     const total = Object.values(byNetwork[key] ?? {}).reduce((a, b) => a + b, 0)
     process.stderr.write(`${key} (${total})\n`)
-    process.stderr.write(`  ${criteria.summary}\n`)
+    process.stderr.write(`  ${renderEditionSummary(criteria.summary)}\n`)
     process.stderr.write(`  SQL hint: ${formatNetworkSqlHint(criteria.layerId, criteria.sqlSource)}\n`)
     process.stderr.write(`  SQL: sql/${criteria.layerId}.sql\n`)
   }

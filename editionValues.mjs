@@ -61,6 +61,24 @@ export function editionValueTokens() {
 }
 
 /**
+ * Replace edition token names in manifest / log summaries (keys match SQL {{TOKENS}}).
+ * @param {string} text
+ */
+export function renderEditionSummary(text) {
+  let out = text
+  const tokens = editionValueTokens()
+  const keys = Object.keys(tokens).sort((a, b) => b.length - a.length)
+  for (const key of keys) {
+    out = out.replaceAll(key, tokens[key])
+  }
+  const lineNames = loadEditionValues().SOOP_XBT_LINE_NAMES
+  if (lineNames?.length) {
+    out = out.replaceAll('SOOP_XBT_LINE_NAMES', `${lineNames.length} lines`)
+  }
+  return out
+}
+
+/**
  * @param {string} sqlTemplate
  */
 export function renderEditionSql(sqlTemplate) {

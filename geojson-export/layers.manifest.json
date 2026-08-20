@@ -57,26 +57,26 @@
     "oceangliders": {
       "geometryKind": "point",
       "category": "Profiling_floats_Argo",
-      "summary": "OceanGliders — layer-table statuses, latest_loc_date >= 2024-01-01",
+      "summary": "OceanGliders — layer-table statuses, latest_loc_date >= OCEAN_GLIDERS_MIN_LOC_DATE",
       "densify": false
     },
     "anibos": {
       "geometryKind": "point",
       "category": "anibos",
-      "summary": "AniBOS — layer-table statuses, ANIMAL family or AniBOS network, latest_loc_date >= 2025-01-01",
+      "summary": "AniBOS — layer-table statuses, ANIMAL family or AniBOS network, latest_loc_date >= ANIBOS_MIN_LOC_DATE",
       "densify": false
     },
     "fvon": {
       "geometryKind": "point",
       "category": "fvon",
-      "summary": "FVON — layer-table statuses, latest_loc_date >= 2025-01-01",
+      "summary": "FVON — layer-table statuses, latest_loc_date >= FVON_MIN_LOC_DATE",
       "densify": false
     },
     "goship": {
       "geometryKind": "line",
       "category": "goship",
       "sourceTable": "oceanops_gis.goship_design_goship_1",
-      "summary": "GO-SHIP — solid = sampled since 2025; dashed = not sampled since 2025",
+      "summary": "GO-SHIP — all design lines; solid = sampled since GOSHIP_EDITION_SINCE; dashed = not sampled since GOSHIP_EDITION_SINCE",
       "densify": true
     },
     "ship_oceano": {
