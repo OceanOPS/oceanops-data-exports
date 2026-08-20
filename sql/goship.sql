@@ -20,9 +20,11 @@ latest_cruise AS (
     cl.line_id,
     c.id AS cruise_id,
     c.departure_date,
-    c.ref AS cruise_ref
+    c.ref AS cruise_ref,
+    s.name AS ship_name
   FROM oceanops.cruise_line cl
   JOIN oceanops.cruise c ON c.id = cl.cruise_id
+  LEFT JOIN oceanops.ship s ON s.id = c.ship_id
   WHERE cl.line_id IN (SELECT line_id FROM design_lines)
   ORDER BY cl.line_id, c.departure_date DESC NULLS LAST, c.id DESC
 ),
@@ -75,12 +77,19 @@ SELECT jsonb_build_object(
         'sampled_in_edition', (es.line_id IS NOT NULL),
         'last_cruise_date', to_char(lc.departure_date, 'YYYY-MM-DD'),
         'last_cruise_ref', lc.cruise_ref,
+        'last_cruise_ship', COALESCE(NULLIF(TRIM(lc.ship_name), ''), ''),
         'last_cruise_countries', COALESCE(lcc.last_cruise_country, ''),
         'last_cruise_country', COALESCE(lcc.last_cruise_country, ''),
         'last_cruise_display', CASE
           WHEN lc.departure_date IS NULL THEN 'No cruise recorded'
           ELSE to_char(lc.departure_date, 'YYYY-MM-DD')
-            || COALESCE(' (' || lc.cruise_ref || ')', '')
+            || CASE
+              WHEN NULLIF(TRIM(lc.ship_name), '') IS NOT NULL
+                THEN ' (' || TRIM(lc.ship_name) || ')'
+              WHEN lc.cruise_ref IS NOT NULL
+                THEN ' (' || lc.cruise_ref || ')'
+              ELSE ''
+            END
         END,
         'last_cruise_by', COALESCE(NULLIF(lcc.last_cruise_country, ''), 'Unknown'),
         'edition_status', CASE
