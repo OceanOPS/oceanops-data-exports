@@ -1,4 +1,4 @@
--- Template: **line** layer (GO-SHIP, SOOP XBT)
+-- Template: **line** layer (GO-SHIP, Ocean TraX)
 --
 -- 1. Copy to `<layerId>.sql`
 -- 2. Set FROM table, category, line list tokens in @where

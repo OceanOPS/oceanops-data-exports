@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Densify line GeoJSON for the 3D globe (GO-SHIP, SOOP XBT, etc.).
+ * Densify line GeoJSON for the 3D globe (GO-SHIP, Ocean TraX, etc.).
  * Implementation: geojson-export/densifyLayer.mjs
  *
  * Usage:

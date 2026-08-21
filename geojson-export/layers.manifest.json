@@ -79,11 +79,11 @@
       "summary": "GO-SHIP — all design lines; solid = sampled since GOSHIP_EDITION_SINCE; dashed = not sampled since GOSHIP_EDITION_SINCE",
       "densify": true
     },
-    "ship_oceano": {
+    "oceantrax": {
       "geometryKind": "line",
       "category": "ship_based_oceanographic_sot",
       "sourceTable": "oceanops_gis.soop_xbt_design_2021_2022",
-      "summary": "SOOP XBT design lines — name list, cruise departure >= SOOP_XBT_SAMPLED_SINCE",
+      "summary": "Ocean TraX design lines — name list; solid green = sampled since SOOP_XBT_SAMPLED_SINCE; dashed = not sampled",
       "densify": true
     }
   }

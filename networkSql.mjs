@@ -25,7 +25,7 @@ export const PARTNER_KEY_TO_LAYER_ID = {
   tsunamiBuoys: 'tsunami_buoys',
   hfRadars: 'hf_radars',
   goShip: 'goship',
-  sot: 'ship_oceano',
+  sot: 'oceantrax',
 }
 
 /** @type {Record<string, string>} */
@@ -36,7 +36,7 @@ export const LAYER_ID_TO_PARTNER_KEY = Object.fromEntries(
 /** Short table label for GeoJSON SQL hints in export summaries. */
 export const GEOJSON_SQL_SOURCE = {
   goship: 'goship_design_goship_1',
-  ship_oceano: 'soop_xbt_design',
+  oceantrax: 'soop_xbt_design',
 }
 
 /** @param {string} content */
