@@ -3,7 +3,7 @@
  * GTS MF networks from obs + GDAC/IOOS/VOTO gliders, AniBOS, FVON, tsunami OSMC.
  */
 
-import { sqlDailyCounts, formatIsoDate } from './queries.mjs'
+import { sqlDailyCounts, formatIsoDate, shiftIsoDateYears } from './queries.mjs'
 import {
   GTS_NETWORKS,
   yoyPeriodForYear,
@@ -93,36 +93,30 @@ export function sqlHierarchyNetworkDailyCounts(network, period) {
 }
 
 /**
- * Rolling window ending on endDate vs same window one year earlier.
- * @param {{ daysWindow: number, endDate?: Date }} range
+ * Edition period vs same calendar span one year earlier.
+ * @param {string} periodSince
+ * @param {string} periodUntil
  */
-export function rollingYoyPeriods(range) {
-  const endDate = range.endDate ?? new Date()
-  const daysWindow = range.daysWindow
-  const currentStart = new Date(endDate)
-  currentStart.setDate(currentStart.getDate() - daysWindow)
-  const previousEnd = new Date(endDate)
-  previousEnd.setFullYear(previousEnd.getFullYear() - 1)
-  const previousStart = new Date(previousEnd)
-  previousStart.setDate(previousStart.getDate() - daysWindow)
-
+export function editionYoyPeriods(periodSince, periodUntil) {
+  const prevSince = shiftIsoDateYears(periodSince, -1)
+  const prevUntil = shiftIsoDateYears(periodUntil, -1)
   const toPeriod = (start, end) => ({
-    sinceSql: `'${formatIsoDate(start)}'::timestamp`,
-    untilSql: `(('${formatIsoDate(end)}'::date + INTERVAL '1 day')::timestamp)`,
-    label: `${formatIsoDate(start)} → ${formatIsoDate(end)}`,
+    sinceSql: `'${start}'::timestamp`,
+    untilSql: `(('${end}'::date + INTERVAL '1 day')::timestamp)`,
+    label: `${start} → ${end}`,
   })
 
   return {
-    current: toPeriod(currentStart, endDate),
-    previous: toPeriod(previousStart, previousEnd),
-    currentEndDate: endDate,
-    previousEndDate: previousEnd,
-    previousYear: endDate.getFullYear() - 1,
+    current: toPeriod(periodSince, periodUntil),
+    previous: toPeriod(prevSince, prevUntil),
+    currentEndDate: new Date(`${periodUntil}T12:00:00`),
+    previousEndDate: new Date(`${prevUntil}T12:00:00`),
+    previousYear: new Date(`${periodUntil}T12:00:00`).getFullYear() - 1,
   }
 }
 
 /**
- * @param {{ daysWindow?: number, year?: number, endDate?: Date }} range
+ * @param {{ periodSince?: string, periodUntil?: string, year?: number, endDate?: Date }} range
  * @param {Date} [referenceDate]
  */
 export function buildHierarchyNetworkYoySteps(range, referenceDate = new Date()) {
@@ -137,8 +131,12 @@ export function buildHierarchyNetworkYoySteps(range, referenceDate = new Date())
     current = yoyPeriodForYear(currentYear, currentYear, referenceDate)
     previous = yoyPeriodForYear(previousYear, currentYear, referenceDate)
   } else {
-    const daysWindow = range.daysWindow ?? 365
-    const periods = rollingYoyPeriods({ daysWindow, endDate: range.endDate ?? referenceDate })
+    const periodSince = range.periodSince
+    const periodUntil = range.periodUntil ?? formatIsoDate(referenceDate)
+    if (!periodSince) {
+      throw new Error('buildHierarchyNetworkYoySteps: periodSince is required')
+    }
+    const periods = editionYoyPeriods(periodSince, periodUntil)
     current = periods.current
     previous = periods.previous
     currentYear = periods.currentEndDate.getFullYear()

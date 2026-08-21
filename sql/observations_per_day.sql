@@ -16,13 +16,16 @@
 SET statement_timeout = 0;
 
 WITH params AS (
-  SELECT (CURRENT_DATE - INTERVAL '{{OBS_DAYS_WINDOW}} days')::timestamp AS since
+  SELECT
+    DATE '{{OBS_PERIOD_SINCE}}'::timestamp AS since,
+    (DATE '{{OBS_PERIOD_UNTIL}}' + INTERVAL '1 day')::timestamp AS until_exclusive
 ),
 daily AS (
   SELECT date_trunc('day', o.obs_date)::date AS obs_day, COUNT(*)::bigint AS cnt
   FROM oceanops.obs o
   CROSS JOIN params p
   WHERE o.obs_date >= p.since
+    AND o.obs_date < p.until_exclusive
     AND o.ptf_id IS NOT NULL
     AND NOT EXISTS (
       SELECT 1 FROM oceanops.network_ptf np
@@ -43,6 +46,7 @@ daily AS (
   FROM oceanops.obs_argo_gdac o
   CROSS JOIN params p
   WHERE o.obs_date >= p.since
+    AND o.obs_date < p.until_exclusive
   GROUP BY 1
 
   UNION ALL
@@ -51,6 +55,7 @@ daily AS (
   FROM oceanops.obs_gliders_gdac o
   CROSS JOIN params p
   WHERE o.obs_date >= p.since
+    AND o.obs_date < p.until_exclusive
   GROUP BY 1
 
   UNION ALL
@@ -59,6 +64,7 @@ daily AS (
   FROM oceanops.obs_gliders_ioos o
   CROSS JOIN params p
   WHERE o.obs_date >= p.since
+    AND o.obs_date < p.until_exclusive
   GROUP BY 1
 
   UNION ALL
@@ -67,6 +73,7 @@ daily AS (
   FROM oceanops.obs_gliders_voto o
   CROSS JOIN params p
   WHERE o.obs_date >= p.since
+    AND o.obs_date < p.until_exclusive
   GROUP BY 1
 
   UNION ALL
@@ -75,6 +82,7 @@ daily AS (
   FROM oceanops.obs_tsuna_gts_osmc o
   CROSS JOIN params p
   WHERE o.obs_date >= p.since
+    AND o.obs_date < p.until_exclusive
   GROUP BY 1
 
   UNION ALL
@@ -83,6 +91,7 @@ daily AS (
   FROM oceanops.obs_anibos_meop o
   CROSS JOIN params p
   WHERE o.obs_date >= p.since
+    AND o.obs_date < p.until_exclusive
   GROUP BY 1
 
   UNION ALL
@@ -91,6 +100,7 @@ daily AS (
   FROM oceanops.obs_fishingvessel_fishydata o
   CROSS JOIN params p
   WHERE o.obs_date >= p.since
+    AND o.obs_date < p.until_exclusive
   GROUP BY 1
 ),
 by_day AS (

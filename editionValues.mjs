@@ -10,12 +10,12 @@ import { fileURLToPath } from 'node:url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export const EDITION_VALUES_PATH = path.join(__dirname, 'edition.values.json')
 
-/** @typedef {{ LAYER_TABLE_PTF_STATUS_IN: string, OBS_DAYS_WINDOW: string, OCEAN_GLIDERS_MIN_LOC_DATE: string, ANIBOS_MIN_LOC_DATE: string, FVON_MIN_LOC_DATE: string, SOOP_XBT_SAMPLED_SINCE: string, GOSHIP_EDITION_SINCE: string, GOSHIP_RECENT_SINCE: string, GOSHIP_DECADAL_SINCE: string, GOSHIP_DECADAL_UNTIL: string, SOOP_XBT_LINE_NAMES: string[] }} EditionValues */
+/** @typedef {{ LAYER_TABLE_PTF_STATUS_IN: string, OBS_PERIOD_SINCE: string, OBS_PERIOD_UNTIL?: string, OCEAN_GLIDERS_MIN_LOC_DATE: string, ANIBOS_MIN_LOC_DATE: string, FVON_MIN_LOC_DATE: string, SOOP_XBT_SAMPLED_SINCE: string, GOSHIP_EDITION_SINCE: string, GOSHIP_RECENT_SINCE: string, GOSHIP_DECADAL_SINCE: string, GOSHIP_DECADAL_UNTIL: string, SOOP_XBT_LINE_NAMES: string[] }} EditionValues */
 
 /** @type {EditionValues | null} */
 let cache = null
 
-/** ISO date (YYYY-MM-DD) for GOSHIP_EDITION_UNTIL — set at export run time. */
+/** ISO date (YYYY-MM-DD) for export-as-of — drives GOSHIP_EDITION_UNTIL and OBS_PERIOD_UNTIL default. */
 let exportAsOfDate = null
 
 /** @param {string | null | undefined} isoDate */
@@ -36,6 +36,25 @@ export function sqlQuotedNameList(names) {
   return names.map((n) => `'${n.replace(/'/g, "''")}'`).join(', ')
 }
 
+/**
+ * Stat4 observation window from edition.values.json.
+ * OBS_PERIOD_UNTIL omitted → export as-of (or GOSHIP_EDITION_UNTIL env).
+ * @returns {{ since: string, until: string }}
+ */
+export function resolveObsPeriodBounds() {
+  const v = loadEditionValues()
+  const asOf =
+    exportAsOfDate ??
+    process.env.GOSHIP_EDITION_UNTIL ??
+    new Date().toISOString().slice(0, 10)
+  const since = v.OBS_PERIOD_SINCE?.trim()
+  if (!since) {
+    throw new Error('OBS_PERIOD_SINCE is required in edition.values.json')
+  }
+  const until = v.OBS_PERIOD_UNTIL?.trim() || asOf
+  return { since, until }
+}
+
 /** @returns {Record<string, string>} */
 export function editionValueTokens() {
   const v = loadEditionValues()
@@ -43,10 +62,12 @@ export function editionValueTokens() {
     exportAsOfDate ??
     process.env.GOSHIP_EDITION_UNTIL ??
     new Date().toISOString().slice(0, 10)
+  const { since: obsSince, until: obsUntil } = resolveObsPeriodBounds()
 
   return {
     LAYER_TABLE_PTF_STATUS_IN: v.LAYER_TABLE_PTF_STATUS_IN,
-    OBS_DAYS_WINDOW: v.OBS_DAYS_WINDOW,
+    OBS_PERIOD_SINCE: obsSince,
+    OBS_PERIOD_UNTIL: obsUntil,
     OCEAN_GLIDERS_MIN_LOC_DATE: v.OCEAN_GLIDERS_MIN_LOC_DATE,
     ANIBOS_MIN_LOC_DATE: v.ANIBOS_MIN_LOC_DATE,
     FVON_MIN_LOC_DATE: v.FVON_MIN_LOC_DATE,

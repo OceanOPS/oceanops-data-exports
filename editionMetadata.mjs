@@ -3,7 +3,7 @@
  * Only includes values that appear in sql/*.sql (@where tokens).
  */
 
-import { loadEditionValues } from './editionValues.mjs'
+import { loadEditionValues, resolveObsPeriodBounds } from './editionValues.mjs'
 
 /** @returns {Record<string, string>} */
 export function buildEditionMetadata() {
@@ -17,7 +17,8 @@ export function buildEditionMetadata() {
     GOSHIP_RECENT_SINCE: v.GOSHIP_RECENT_SINCE,
     GOSHIP_DECADAL_SINCE: v.GOSHIP_DECADAL_SINCE,
     GOSHIP_DECADAL_UNTIL: v.GOSHIP_DECADAL_UNTIL,
-    OBS_DAYS_WINDOW: v.OBS_DAYS_WINDOW,
+    OBS_PERIOD_SINCE: v.OBS_PERIOD_SINCE,
+    OBS_PERIOD_UNTIL: resolveObsPeriodBounds().until,
   }
 }
 

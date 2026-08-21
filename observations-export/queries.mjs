@@ -99,25 +99,24 @@ export function formatIsoDate(date) {
 }
 
 /**
- * @param {number} daysWindow
- * @param {Date} endDate inclusive end (defaults to today)
+ * @param {string} periodStart ISO date (inclusive)
+ * @param {string} periodEnd ISO date (inclusive)
  * @returns {{ label: string, fromSql: string, toSql: string }[]}
  */
-export function obsMonthChunks(daysWindow, endDate = new Date()) {
-  const endIso = formatIsoDate(endDate)
-  const startDate = new Date(endDate)
-  startDate.setDate(startDate.getDate() - daysWindow)
-  const startIso = formatIsoDate(startDate)
-  const since = `'${startIso}'::timestamp`
-  const until = `(('${endIso}'::date + INTERVAL '1 day')::timestamp)`
+export function obsDateRangeChunks(periodStart, periodEnd) {
+  const since = `'${periodStart}'::timestamp`
+  const until = `(('${periodEnd}'::date + INTERVAL '1 day')::timestamp)`
+  const start = new Date(`${periodStart}T12:00:00`)
+  const end = new Date(`${periodEnd}T12:00:00`)
+  const daysSpan = Math.floor((end.getTime() - start.getTime()) / 86400000) + 1
 
-  if (daysWindow <= 31) {
-    return [{ label: `${daysWindow}-day window`, fromSql: since, toSql: until }]
+  if (daysSpan <= 31) {
+    return [{ label: `${periodStart} → ${periodEnd}`, fromSql: since, toSql: until }]
   }
 
   /** @type {{ label: string, fromSql: string, toSql: string }[]} */
   const chunks = []
-  const monthSpan = Math.min(12, Math.ceil(daysWindow / 28) + 1)
+  const monthSpan = Math.min(12, Math.ceil(daysSpan / 28) + 1)
   for (let m = 0; m < monthSpan; m += 1) {
     const from = `(date_trunc('month', ${since}) + INTERVAL '${m} months')`
     const to = `(date_trunc('month', ${since}) + INTERVAL '${m + 1} months')`
@@ -130,9 +129,23 @@ export function obsMonthChunks(daysWindow, endDate = new Date()) {
   return chunks
 }
 
+/** @param {string} isoDate @param {number} [yearDelta] */
+export function shiftIsoDateYears(isoDate, yearDelta = -1) {
+  const d = new Date(`${isoDate}T12:00:00`)
+  d.setFullYear(d.getFullYear() + yearDelta)
+  return formatIsoDate(d)
+}
+
+/** Inclusive day count between two ISO dates. */
+export function daysBetweenIso(periodStart, periodEnd) {
+  const start = new Date(`${periodStart}T12:00:00`)
+  const end = new Date(`${periodEnd}T12:00:00`)
+  return Math.floor((end.getTime() - start.getTime()) / 86400000) + 1
+}
+
 /**
- * @param {{ daysWindow?: number, year?: number, endDate?: Date }} range
- * @returns {{ label: string, obsChunks: { label: string, fromSql: string, toSql: string }[], since: string, until: string | null, rangeLabel: string, endDate: Date }}
+ * @param {{ periodSince?: string, periodUntil?: string, year?: number, endDate?: Date }} range
+ * @returns {{ label: string, obsChunks: { label: string, fromSql: string, toSql: string }[], since: string, until: string | null, rangeLabel: string, endDate: Date, periodStart: string, periodEnd: string, daysWindow: number }}
  */
 export function resolveObservationRange(range) {
   const endDate = range.endDate ?? new Date()
@@ -146,6 +159,7 @@ export function resolveObservationRange(range) {
         : `${year}-12-31`
     const since = `'${periodStart}'::timestamp`
     const until = `'${year + 1}-01-01'::timestamp`
+    const daysWindow = daysBetweenIso(periodStart, periodEnd)
     return {
       label: String(year),
       obsChunks: [{ label: String(year), fromSql: since, toSql: until }],
@@ -155,25 +169,28 @@ export function resolveObservationRange(range) {
       endDate: new Date(`${periodEnd}T12:00:00`),
       periodStart,
       periodEnd,
+      daysWindow,
     }
   }
 
-  const daysWindow = range.daysWindow ?? 365
-  const startDate = new Date(endDate)
-  startDate.setDate(startDate.getDate() - daysWindow)
-  const periodStart = formatIsoDate(startDate)
-  const periodEnd = formatIsoDate(endDate)
+  const periodStart = range.periodSince
+  const periodEnd = range.periodUntil ?? formatIsoDate(endDate)
+  if (!periodStart) {
+    throw new Error('resolveObservationRange: periodSince is required (edition.values.json → OBS_PERIOD_SINCE)')
+  }
   const since = `'${periodStart}'::timestamp`
   const until = `(('${periodEnd}'::date + INTERVAL '1 day')::timestamp)`
+  const daysWindow = daysBetweenIso(periodStart, periodEnd)
   return {
-    label: `${daysWindow}-day`,
-    obsChunks: obsMonthChunks(daysWindow, endDate),
+    label: `${periodStart}–${periodEnd}`,
+    obsChunks: obsDateRangeChunks(periodStart, periodEnd),
     since,
     until,
-    rangeLabel: `rolling ${daysWindow}-day window ending ${periodEnd}`,
-    endDate,
+    rangeLabel: `${periodStart} → ${periodEnd}`,
+    endDate: new Date(`${periodEnd}T12:00:00`),
     periodStart,
     periodEnd,
+    daysWindow,
   }
 }
 
@@ -198,7 +215,7 @@ ORDER BY 1
 }
 
 /**
- * @param {{ daysWindow?: number, year?: number, endDate?: Date, obsFilter?: ObsFilter }} [opts]
+ * @param {{ periodSince?: string, periodUntil?: string, year?: number, endDate?: Date, obsFilter?: ObsFilter }} [opts]
  */
 export function buildObservationSteps(opts = {}) {
   const obsFilter = opts.obsFilter ?? 'hierarchy'

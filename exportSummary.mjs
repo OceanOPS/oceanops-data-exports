@@ -2,7 +2,7 @@
  * Combined partner + GeoJSON export summary (single block for export:all).
  */
 
-import { loadEditionValues, renderEditionSummary } from './editionValues.mjs'
+import { loadEditionValues, renderEditionSummary, resolveObsPeriodBounds } from './editionValues.mjs'
 import { LAYER_MANIFEST } from './geojson-export/exportConfig.mjs'
 import {
   EXPORT_EDITION_LABEL,
@@ -62,12 +62,14 @@ export function printCombinedExportSummary(byNetwork, countsByLayer, config = {}
   process.stderr.write(`  GOSHIP_DECADAL_SINCE: ${values.GOSHIP_DECADAL_SINCE}\n`)
   process.stderr.write(`  GOSHIP_DECADAL_UNTIL: ${values.GOSHIP_DECADAL_UNTIL}\n`)
   process.stderr.write(`  SOOP_XBT_LINE_NAMES: ${values.SOOP_XBT_LINE_NAMES.length} lines\n`)
-  process.stderr.write(`  OBS_DAYS_WINDOW: ${values.OBS_DAYS_WINDOW}\n`)
+  const { since, until } = resolveObsPeriodBounds()
+  process.stderr.write(`  OBS_PERIOD_SINCE: ${since}\n`)
+  process.stderr.write(`  OBS_PERIOD_UNTIL: ${until}\n`)
 
   if (config.obsStats) {
     process.stderr.write('\nObservations per day (stat4)\n')
-    process.stderr.write(`  Avg (hierarchy, rolling): ${config.obsStats.avgObsPerDay}\n`)
-    process.stderr.write(`  Window: ${config.obsStats.daysWindow} days\n`)
+    process.stderr.write(`  Avg (hierarchy): ${config.obsStats.avgObsPerDay}\n`)
+    process.stderr.write(`  Period: ${config.obsStats.periodStart} → ${config.obsStats.periodEnd}\n`)
     process.stderr.write(`  Days with data: ${config.obsStats.daysWithData}\n`)
     process.stderr.write(`  Total obs in window: ${config.obsStats.totalObs}\n`)
     process.stderr.write('  Source: observations-export/queries.mjs\n\n')
