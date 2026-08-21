@@ -28,15 +28,14 @@ latest_cruise AS (
   WHERE cl.line_id IN (SELECT line_id FROM design_lines)
   ORDER BY cl.line_id, c.departure_date DESC NULLS LAST, c.id DESC
 ),
-latest_cruise_country AS (
-  SELECT DISTINCT ON (lc.line_id)
-    lc.line_id,
-    co.name AS last_cruise_country
+latest_cruise_countries AS (
+  SELECT lc.line_id,
+    string_agg(DISTINCT co.name, ', ' ORDER BY co.name) AS last_cruise_countries
   FROM latest_cruise lc
-  JOIN oceanops.cruise_program cp ON cp.cruise_id = lc.cruise_id
-  JOIN oceanops.program p ON p.id = cp.program_id
-  JOIN oceanops.country co ON co.id = p.country_id
-  ORDER BY lc.line_id, cp.lead DESC NULLS LAST, co.name
+  JOIN oceanops.cruise_country cc ON cc.cruise_id = lc.cruise_id
+  JOIN oceanops.country co ON co.id = cc.country_id
+  WHERE co.code2 IS NOT NULL AND TRIM(co.code2) <> ''
+  GROUP BY lc.line_id
 ),
 edition_sampled AS (
   SELECT DISTINCT cl.line_id
@@ -62,6 +61,20 @@ decadal_plan AS (
     AND ls.line_id IN (SELECT line_id FROM design_lines)
     AND s.start_date <= DATE '{{GOSHIP_DECADAL_UNTIL}}'
     AND COALESCE(s.end_date, DATE '{{GOSHIP_DECADAL_UNTIL}}') >= DATE '{{GOSHIP_DECADAL_SINCE}}'
+),
+line_edition_countries AS (
+  SELECT cl.line_id,
+    string_agg(DISTINCT co.code2, ',' ORDER BY co.code2) AS country_codes
+  FROM oceanops.cruise_line cl
+  JOIN oceanops.cruise cr ON cr.id = cl.cruise_id
+  JOIN oceanops.cruise_country cc ON cc.cruise_id = cr.id
+  JOIN oceanops.country co ON co.id = cc.country_id
+  WHERE cl.line_id IN (SELECT line_id FROM design_lines)
+    AND cr.departure_date >= DATE '{{GOSHIP_EDITION_SINCE}}'
+    AND cr.departure_date <= DATE '{{GOSHIP_EDITION_UNTIL}}'
+    AND co.code2 IS NOT NULL
+    AND TRIM(co.code2) <> ''
+  GROUP BY cl.line_id
 )
 SELECT jsonb_build_object(
   'type', 'FeatureCollection',
@@ -78,8 +91,8 @@ SELECT jsonb_build_object(
         'last_cruise_date', to_char(lc.departure_date, 'YYYY-MM-DD'),
         'last_cruise_ref', lc.cruise_ref,
         'last_cruise_ship', COALESCE(NULLIF(TRIM(lc.ship_name), ''), ''),
-        'last_cruise_countries', COALESCE(lcc.last_cruise_country, ''),
-        'last_cruise_country', COALESCE(lcc.last_cruise_country, ''),
+        'last_cruise_countries', COALESCE(lcc.last_cruise_countries, ''),
+        'last_cruise_country', COALESCE(lcc.last_cruise_countries, ''),
         'last_cruise_display', CASE
           WHEN lc.departure_date IS NULL THEN 'No cruise recorded'
           ELSE to_char(lc.departure_date, 'YYYY-MM-DD')
@@ -91,7 +104,8 @@ SELECT jsonb_build_object(
               ELSE ''
             END
         END,
-        'last_cruise_by', COALESCE(NULLIF(lcc.last_cruise_country, ''), 'Unknown'),
+        'last_cruise_by', COALESCE(NULLIF(lcc.last_cruise_countries, ''), 'Unknown'),
+        'edition_country_codes', COALESCE(lec.country_codes, ''),
         'edition_status', CASE
           WHEN es.line_id IS NOT NULL THEN 'Sampled since 2025'
           WHEN rs.line_id IS NOT NULL THEN 'Sampled 2023–2024'
@@ -109,10 +123,11 @@ LEFT JOIN edition_sampled es ON es.line_id = d.line_id
 LEFT JOIN recent_sampled rs ON rs.line_id = d.line_id
 LEFT JOIN decadal_plan dp ON dp.line_id = d.line_id
 LEFT JOIN latest_cruise lc ON lc.line_id = d.line_id
-LEFT JOIN latest_cruise_country lcc ON lcc.line_id = d.line_id;
+LEFT JOIN latest_cruise_countries lcc ON lcc.line_id = d.line_id
+LEFT JOIN line_edition_countries lec ON lec.line_id = d.line_id;
 
 -- @partner
--- Per-country lines sampled in the edition window (same design filter + cruise dates)
+-- Per-country lines with edition cruises: cruise_line → cruise (dates) → cruise_country
 SET search_path TO oceanops, oceanops_gis, public;
 WITH selected_lines AS (
   SELECT DISTINCT g.line_id
@@ -122,22 +137,21 @@ WITH selected_lines AS (
     AND EXISTS (
       SELECT 1
       FROM oceanops.cruise_line cl
-      JOIN oceanops.cruise c ON c.id = cl.cruise_id
+      JOIN oceanops.cruise cr ON cr.id = cl.cruise_id
       WHERE cl.line_id = g.line_id
-        AND c.departure_date >= DATE '{{GOSHIP_EDITION_SINCE}}'
-        AND c.departure_date <= DATE '{{GOSHIP_EDITION_UNTIL}}'
+        AND cr.departure_date >= DATE '{{GOSHIP_EDITION_SINCE}}'
+        AND cr.departure_date <= DATE '{{GOSHIP_EDITION_UNTIL}}'
     )
 )
-SELECT c.code2, COUNT(DISTINCT sl.line_id)::int AS line_count
+SELECT co.code2, COUNT(DISTINCT sl.line_id)::int AS line_count
 FROM selected_lines sl
 JOIN cruise_line cl ON cl.line_id = sl.line_id
-JOIN cruise c ON c.id = cl.cruise_id
-  AND c.departure_date >= DATE '{{GOSHIP_EDITION_SINCE}}'
-  AND c.departure_date <= DATE '{{GOSHIP_EDITION_UNTIL}}'
-JOIN cruise_program cp ON cp.cruise_id = c.id
-JOIN program p ON p.id = cp.program_id
-JOIN country c ON c.id = p.country_id
-WHERE c.code2 IS NOT NULL
-  AND TRIM(c.code2) <> ''
-GROUP BY c.code2
-ORDER BY c.code2;
+JOIN cruise cr ON cr.id = cl.cruise_id
+  AND cr.departure_date >= DATE '{{GOSHIP_EDITION_SINCE}}'
+  AND cr.departure_date <= DATE '{{GOSHIP_EDITION_UNTIL}}'
+JOIN cruise_country cc ON cc.cruise_id = cr.id
+JOIN country co ON co.id = cc.country_id
+WHERE co.code2 IS NOT NULL
+  AND TRIM(co.code2) <> ''
+GROUP BY co.code2
+ORDER BY co.code2;

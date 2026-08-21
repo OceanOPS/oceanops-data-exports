@@ -29,7 +29,7 @@ FROM oceanops_gis.goship_design_goship_1 AS g
 WHERE {{WHERE}};
 
 -- @partner
--- Per-country lines: same @where as map → cruise → program → country
+-- Per-country lines: cruise_line → cruise → cruise_country
 SET search_path TO oceanops, oceanops_gis, public;
 WITH selected_lines AS (
   SELECT DISTINCT g.line_id
@@ -37,13 +37,13 @@ WITH selected_lines AS (
   WHERE ({{WHERE}})
     AND g.line_id IS NOT NULL
 )
-SELECT c.code2, COUNT(DISTINCT sl.line_id)::int AS line_count
+SELECT co.code2, COUNT(DISTINCT sl.line_id)::int AS line_count
 FROM selected_lines sl
 JOIN cruise_line cl ON cl.line_id = sl.line_id
-JOIN cruise_program cp ON cp.cruise_id = cl.cruise_id
-JOIN program p ON p.id = cp.program_id
-JOIN country c ON c.id = p.country_id
-WHERE c.code2 IS NOT NULL
-  AND TRIM(c.code2) <> ''
-GROUP BY c.code2
-ORDER BY c.code2;
+JOIN cruise cr ON cr.id = cl.cruise_id
+JOIN cruise_country cc ON cc.cruise_id = cr.id
+JOIN country co ON co.id = cc.country_id
+WHERE co.code2 IS NOT NULL
+  AND TRIM(co.code2) <> ''
+GROUP BY co.code2
+ORDER BY co.code2;
