@@ -11,6 +11,28 @@ WITH design_lines AS (
   FROM oceanops_gis.soop_xbt_design_2021_2022 AS g
   WHERE {{WHERE}}
 ),
+latest_cruise AS (
+  SELECT DISTINCT ON (cl.line_id)
+    cl.line_id,
+    c.id AS cruise_id,
+    c.departure_date,
+    c.ref AS cruise_ref,
+    s.name AS ship_name
+  FROM oceanops.cruise_line cl
+  JOIN oceanops.cruise c ON c.id = cl.cruise_id
+  LEFT JOIN oceanops.ship s ON s.id = c.ship_id
+  WHERE cl.line_id IN (SELECT line_id FROM design_lines)
+  ORDER BY cl.line_id, c.departure_date DESC NULLS LAST, c.id DESC
+),
+latest_cruise_countries AS (
+  SELECT lc.line_id,
+    string_agg(DISTINCT co.name, ', ' ORDER BY co.name) AS last_cruise_countries
+  FROM latest_cruise lc
+  JOIN oceanops.cruise_country cc ON cc.cruise_id = lc.cruise_id
+  JOIN oceanops.country co ON co.id = cc.country_id
+  WHERE co.code2 IS NOT NULL AND TRIM(co.code2) <> ''
+  GROUP BY lc.line_id
+),
 edition_sampled AS (
   SELECT DISTINCT cl.line_id
   FROM oceanops.cruise_line cl
@@ -43,13 +65,38 @@ SELECT jsonb_build_object(
         'line_name', d.name,
         'line_style', CASE WHEN es.line_id IS NOT NULL THEN 'solid' ELSE 'dash' END,
         'sampled_in_edition', (es.line_id IS NOT NULL),
-        'edition_country_codes', COALESCE(lec.country_codes, '')
+        'last_cruise_date', to_char(lc.departure_date, 'YYYY-MM-DD'),
+        'last_cruise_ref', lc.cruise_ref,
+        'last_cruise_ship', COALESCE(NULLIF(TRIM(lc.ship_name), ''), ''),
+        'last_cruise_countries', COALESCE(lcc.last_cruise_countries, ''),
+        'last_cruise_country', COALESCE(lcc.last_cruise_countries, ''),
+        'last_cruise_display', CASE
+          WHEN lc.departure_date IS NULL THEN 'No cruise recorded'
+          ELSE to_char(lc.departure_date, 'YYYY-MM-DD')
+            || CASE
+              WHEN NULLIF(TRIM(lc.ship_name), '') IS NOT NULL
+                THEN ' (' || TRIM(lc.ship_name) || ')'
+              WHEN lc.cruise_ref IS NOT NULL
+                THEN ' (' || lc.cruise_ref || ')'
+              ELSE ''
+            END
+        END,
+        'last_cruise_by', COALESCE(NULLIF(lcc.last_cruise_countries, ''), 'Unknown'),
+        'edition_country_codes', COALESCE(lec.country_codes, ''),
+        'edition_status', CASE
+          WHEN es.line_id IS NOT NULL THEN 'Sampled since ' || to_char(DATE '{{SOOP_XBT_SAMPLED_SINCE}}', 'YYYY')
+          WHEN lc.departure_date IS NULL THEN 'No cruise recorded'
+          ELSE 'Not sampled since ' || to_char(DATE '{{SOOP_XBT_SAMPLED_SINCE}}', 'YYYY')
+        END
       )
     )
+    ORDER BY d.name
   ), '[]'::jsonb)
 )
 FROM design_lines d
 LEFT JOIN edition_sampled es ON es.line_id = d.line_id
+LEFT JOIN latest_cruise lc ON lc.line_id = d.line_id
+LEFT JOIN latest_cruise_countries lcc ON lcc.line_id = d.line_id
 LEFT JOIN line_edition_countries lec ON lec.line_id = d.line_id;
 
 -- @partner
