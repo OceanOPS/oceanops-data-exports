@@ -1,15 +1,18 @@
 -- Layer: oceantrax
--- Ocean TraX (SOOP) design lines — line list; solid = sampled since SOOP_XBT_SAMPLED_SINCE
+-- Ocean TraX (SOOP) design lines — soop_xbt_design_2023_2024
+-- Map: line_status active = solid, reactivate = dashed (both orange on map)
+-- Partner counts: cruises since SOOP_XBT_SAMPLED_SINCE via cruise_program lead → program.country
 -- Country attribution: cruise_program (lead = 1) → program.country_id (not cruise_country)
--- Edit filter under @where; edition.values.json for dates / line lists.
+-- Edit filter under @where; edition.values.json for date tokens.
 
 -- @where
-g.shape IS NOT NULL AND g.name IN ({{SOOP_XBT_LINE_NAMES_IN}})
+g.shape IS NOT NULL
+AND g.line_status IN ('active', 'reactivate')
 
 -- @geojson
 WITH design_lines AS (
-  SELECT g.line_id, g.name, g.shape
-  FROM oceanops_gis.soop_xbt_design_2021_2022 AS g
+  SELECT g.line_id, g.name, g.shape, g.line_status
+  FROM oceanops_gis.soop_xbt_design_2023_2024 AS g
   WHERE {{WHERE}}
 ),
 cruise_lead_country AS (
@@ -73,7 +76,8 @@ SELECT jsonb_build_object(
         'category', 'ship_based_oceanographic_sot',
         'line_id', d.line_id,
         'line_name', d.name,
-        'line_style', CASE WHEN es.line_id IS NOT NULL THEN 'solid' ELSE 'dash' END,
+        'line_status', d.line_status,
+        'line_style', CASE WHEN d.line_status = 'active' THEN 'solid' ELSE 'dash' END,
         'sampled_in_edition', (es.line_id IS NOT NULL),
         'last_cruise_date', to_char(lc.departure_date, 'YYYY-MM-DD'),
         'last_cruise_ref', lc.cruise_ref,
@@ -115,7 +119,7 @@ LEFT JOIN line_edition_countries lec ON lec.line_id = d.line_id;
 SET search_path TO oceanops, oceanops_gis, public;
 WITH selected_lines AS (
   SELECT DISTINCT g.line_id
-  FROM soop_xbt_design_2021_2022 AS g
+  FROM soop_xbt_design_2023_2024 AS g
   WHERE ({{WHERE}})
     AND g.line_id IS NOT NULL
 ),

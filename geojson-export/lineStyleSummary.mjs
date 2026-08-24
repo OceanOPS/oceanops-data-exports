@@ -43,16 +43,21 @@ export function yearFromIsoDate(isoDate) {
 /**
  * @param {import('node:fs').WriteStream | { write: (chunk: string) => void }} out
  * @param {LineStyleSummary} summary
- * @param {string} sampledSinceLabel e.g. "2025"
+ * @param {string} contextLabel e.g. "2025" or "oceantrax"
+ * @param {{ solidLabel?: string, dashLabel?: string, legendNote?: string }} [labels]
  */
-export function writeLineStyleSummaryLines(out, summary, sampledSinceLabel) {
+export function writeLineStyleSummaryLines(out, summary, contextLabel, labels = {}) {
+  const solidLabel = labels.solidLabel ?? 'sampled'
+  const dashLabel = labels.dashLabel ?? 'not sampled'
+  const legendNote =
+    labels.legendNote ?? `since ${contextLabel}, legend solid · dash`
   out.write(
-    `  Map lines: ${summary.sampled} sampled · ${summary.notSampled} not sampled (since ${sampledSinceLabel}, legend solid · dash)\n`,
+    `  Map lines: ${summary.sampled} ${solidLabel} · ${summary.notSampled} ${dashLabel} (${legendNote})\n`,
   )
   if (summary.sampledNames.length > 0) {
-    out.write(`    Sampled: ${summary.sampledNames.join(', ')}\n`)
+    out.write(`    ${solidLabel[0].toUpperCase()}${solidLabel.slice(1)}: ${summary.sampledNames.join(', ')}\n`)
   }
   if (summary.notSampledNames.length > 0) {
-    out.write(`    Not sampled: ${summary.notSampledNames.join(', ')}\n`)
+    out.write(`    ${dashLabel[0].toUpperCase()}${dashLabel.slice(1)}: ${summary.notSampledNames.join(', ')}\n`)
   }
 }

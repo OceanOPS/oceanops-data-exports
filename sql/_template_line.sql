@@ -8,7 +8,7 @@
 
 -- @where
 g.shape IS NOT NULL
--- Example line-list filter: AND g.name IN ({{SOOP_XBT_LINE_NAMES_IN}})
+-- Example line-status filter: AND g.line_status IN ('active', 'reactivate')
 
 -- @geojson
 SELECT jsonb_build_object(

@@ -25,8 +25,8 @@ export const NETWORK_CRITERIA = {
   fvon: { summary: 'FVON — layer-table statuses + latest_loc_date cutoff', layerId: 'fvon', sqlSource: 'ptf_loc_n' },
   sotVos: { summary: 'OPERATIONAL SOT/VOS ships', layerId: 'vos', sqlSource: 'ptf_loc_n' },
   sotAsap: { summary: 'OPERATIONAL ASAP ships', layerId: 'asap', sqlSource: 'ptf_loc_n' },
-  sot: { summary: 'Ocean TraX design lines — name list; partner counts = cruises since SOOP_XBT_SAMPLED_SINCE via cruise_program lead → program.country', layerId: 'oceantrax', sqlSource: 'cruise_program' },
-  goShip: { summary: 'GO-SHIP — line_type <> Associated, name <> P03; partner counts = edition cruises via cruise_program lead → program.country', layerId: 'goship', sqlSource: 'cruise_program' },
+  sot: { summary: 'Ocean TraX — line_status active/reactivate; partner counts = cruises since SOOP_XBT_SAMPLED_SINCE via cruise_program lead → program.country', layerId: 'oceantrax', sqlSource: 'cruise_program' },
+  goShip: { summary: 'GO-SHIP — line_type <> Associated, name <> P03; partner counts = edition cruises (lead program country) since GOSHIP_EDITION_SINCE', layerId: 'goship', sqlSource: 'cruise_program' },
   gloss: { summary: 'OPERATIONAL GLOSS sea-level gauges', layerId: 'gloss', sqlSource: 'ptf_loc_n' },
   oceanSites: { summary: 'OceanSITES moorings — OPERATIONAL or INACTIVE', layerId: 'oceansites', sqlSource: 'ptf_loc_n' },
   mooredBuoys: { summary: 'OPERATIONAL moored buoys (excl. OceanSITES)', layerId: 'moored_buoys', sqlSource: 'ptf_loc_n' },
@@ -66,8 +66,7 @@ export function printExportCriteriaSummary(byNetwork, config = {}) {
   process.stderr.write(`  GOSHIP_EDITION_SINCE: ${values.GOSHIP_EDITION_SINCE}\n`)
   process.stderr.write(`  GOSHIP_RECENT_SINCE: ${values.GOSHIP_RECENT_SINCE}\n`)
   process.stderr.write(`  GOSHIP_DECADAL_SINCE: ${values.GOSHIP_DECADAL_SINCE}\n`)
-  process.stderr.write(`  GOSHIP_DECADAL_UNTIL: ${values.GOSHIP_DECADAL_UNTIL}\n`)
-  process.stderr.write(`  SOOP_XBT_LINE_NAMES: ${values.SOOP_XBT_LINE_NAMES.length} lines\n\n`)
+  process.stderr.write(`  GOSHIP_DECADAL_UNTIL: ${values.GOSHIP_DECADAL_UNTIL}\n\n`)
 }
 
 export { PARTNER_KEY_TO_LAYER_ID }

@@ -36,7 +36,7 @@ export const LAYER_ID_TO_PARTNER_KEY = Object.fromEntries(
 /** Short table label for GeoJSON SQL hints in export summaries. */
 export const GEOJSON_SQL_SOURCE = {
   goship: 'goship_design_goship_1',
-  oceantrax: 'soop_xbt_design',
+  oceantrax: 'soop_xbt_design_2023_2024',
 }
 
 /** @param {string} content */

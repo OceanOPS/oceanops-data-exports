@@ -113,7 +113,18 @@ export function printExportSummary(countsByLayer, lineStyleByLayer = {}) {
         layerId === 'goship'
           ? yearFromIsoDate(values.GOSHIP_EDITION_SINCE)
           : yearFromIsoDate(values.SOOP_XBT_SAMPLED_SINCE)
-      writeLineStyleSummaryLines(process.stderr, lineStyle, sinceYear)
+      writeLineStyleSummaryLines(
+        process.stderr,
+        lineStyle,
+        sinceYear,
+        layerId === 'oceantrax'
+          ? {
+              solidLabel: 'active',
+              dashLabel: 'reactivate',
+              legendNote: 'legend solid · dash',
+            }
+          : undefined,
+      )
     }
     process.stderr.write(`    SQL hint: ${formatGeojsonSqlHint(layerId, sqlSource)}\n`)
     process.stderr.write(`    SQL: sql/${layerId}.sql\n`)

@@ -148,7 +148,7 @@ function renderPartnerCountries(countries, meta, contributingCountries) {
  * Last updated: ${generatedAt}
  *
  * Note: goShip can be:
- * - A number (0 or positive): GO-SHIP design line count for the country
+ * - A number (0 or positive): GO-SHIP edition cruise count for the country (lead program country)
  * - -1: represents "X" (participates but count not tracked)
  */
 

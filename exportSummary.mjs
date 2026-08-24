@@ -54,6 +54,13 @@ export function printCombinedExportSummary(byNetwork, countsByLayer, lineStyleBy
         process.stderr,
         lineStyle,
         lineSampledSinceLabel(layerId, values),
+        layerId === 'oceantrax'
+          ? {
+              solidLabel: 'active',
+              dashLabel: 'reactivate',
+              legendNote: 'legend solid · dash',
+            }
+          : undefined,
       )
     }
 
@@ -82,7 +89,6 @@ export function printCombinedExportSummary(byNetwork, countsByLayer, lineStyleBy
   process.stderr.write(`  GOSHIP_RECENT_SINCE: ${values.GOSHIP_RECENT_SINCE}\n`)
   process.stderr.write(`  GOSHIP_DECADAL_SINCE: ${values.GOSHIP_DECADAL_SINCE}\n`)
   process.stderr.write(`  GOSHIP_DECADAL_UNTIL: ${values.GOSHIP_DECADAL_UNTIL}\n`)
-  process.stderr.write(`  SOOP_XBT_LINE_NAMES: ${values.SOOP_XBT_LINE_NAMES.length} lines\n`)
   const { since, until } = resolveObsPeriodBounds()
   process.stderr.write(`  OBS_PERIOD_SINCE: ${since}\n`)
   process.stderr.write(`  OBS_PERIOD_UNTIL: ${until}\n`)

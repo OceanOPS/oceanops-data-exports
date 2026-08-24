@@ -138,21 +138,13 @@ LEFT JOIN latest_cruise_countries lcc ON lcc.line_id = d.line_id
 LEFT JOIN line_edition_countries lec ON lec.line_id = d.line_id;
 
 -- @partner
--- Per-country lines with edition cruises: cruise_line → cruise → cruise_program (lead) → program.country
+-- Per-country edition cruises on GO-SHIP design lines (lead program country; counts cruises, not distinct lines)
 SET search_path TO oceanops, oceanops_gis, public;
-WITH selected_lines AS (
+WITH design_lines AS (
   SELECT DISTINCT g.line_id
   FROM goship_design_goship_1 AS g
   WHERE ({{WHERE}})
     AND g.line_id IS NOT NULL
-    AND EXISTS (
-      SELECT 1
-      FROM oceanops.cruise_line cl
-      JOIN oceanops.cruise cr ON cr.id = cl.cruise_id
-      WHERE cl.line_id = g.line_id
-        AND cr.departure_date >= DATE '{{GOSHIP_EDITION_SINCE}}'
-        AND cr.departure_date <= DATE '{{GOSHIP_EDITION_UNTIL}}'
-    )
 ),
 cruise_lead_country AS (
   SELECT
@@ -165,9 +157,9 @@ cruise_lead_country AS (
     AND co.code2 IS NOT NULL
     AND TRIM(co.code2) <> ''
 )
-SELECT clc.country_code2 AS code2, COUNT(DISTINCT sl.line_id)::int AS line_count
-FROM selected_lines sl
-JOIN cruise_line cl ON cl.line_id = sl.line_id
+SELECT clc.country_code2 AS code2, COUNT(DISTINCT cr.id)::int AS line_count
+FROM design_lines dl
+JOIN cruise_line cl ON cl.line_id = dl.line_id
 JOIN cruise cr ON cr.id = cl.cruise_id
   AND cr.departure_date >= DATE '{{GOSHIP_EDITION_SINCE}}'
   AND cr.departure_date <= DATE '{{GOSHIP_EDITION_UNTIL}}'

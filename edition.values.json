@@ -8,30 +8,5 @@
   "GOSHIP_EDITION_SINCE": "2025-01-01",
   "GOSHIP_RECENT_SINCE": "2023-01-01",
   "GOSHIP_DECADAL_SINCE": "2025-01-01",
-  "GOSHIP_DECADAL_UNTIL": "2034-12-31",
-  "SOOP_XBT_LINE_NAMES": [
-    "AX07",
-    "AX08",
-    "AX10",
-    "AX97",
-    "AX32",
-    "AX22",
-    "AX25",
-    "IX01",
-    "IX21",
-    "PX09",
-    "PX11",
-    "PX13",
-    "IX22",
-    "PX02",
-    "PX06",
-    "PX30",
-    "PX31",
-    "PX34",
-    "PX37",
-    "PX40",
-    "PX39",
-    "IX28",
-    "PX36"
-  ]
+  "GOSHIP_DECADAL_UNTIL": "2034-12-31"
 }
