@@ -23,6 +23,7 @@ import { assertPsqlAvailable, runPsqlQuery } from './geojson-export/db.mjs'
 
 loadDotEnv()
 import { densifyFeatureCollection } from './geojson-export/densifyLayer.mjs'
+import { summarizeLineStyles } from './geojson-export/lineStyleSummary.mjs'
 import { LAYER_ID_TO_PARTNER_KEY } from './networkSql.mjs'
 import {
   DENSIFY_LAYER_IDS,
@@ -86,7 +87,7 @@ async function exportLayer(layerId, opts) {
 
   if (dryRun) {
     process.stderr.write(`\n--- ${layerId} (sql/${layerId}.sql) ---\n${sql}\n`)
-    return { layerId, featureCount: 0, written: [] }
+    return { layerId, featureCount: 0, written: [], lineStyle: null }
   }
 
   const result = runPsqlQuery(sql)
@@ -96,6 +97,8 @@ async function exportLayer(layerId, opts) {
 
   const collection = parseFeatureCollection(result.stdout)
   const featureCount = collection.features.length
+  const lineStyle =
+    entry.geometryKind === 'line' ? summarizeLineStyles(collection) : null
   const written = []
 
   if (entry.geometryKind === 'line') {
@@ -123,7 +126,7 @@ async function exportLayer(layerId, opts) {
     process.stderr.write(`    → ${path.relative(SIMPLE_MAP_ROOT, filePath)}\n`)
   }
 
-  return { layerId, featureCount, written }
+  return { layerId, featureCount, written, lineStyle }
 }
 
 /** @param {string[]} [argv] @param {{ noSummary?: boolean }} [options] */
@@ -160,14 +163,17 @@ export async function runGeojsonExport(argv = process.argv.slice(2), options = {
 
   /** @type {Record<string, number>} */
   const countsByLayer = {}
+  /** @type {Record<string, import('./geojson-export/lineStyleSummary.mjs').LineStyleSummary>} */
+  const lineStyleByLayer = {}
 
   for (const layerId of layerIds) {
     const result = await exportLayer(layerId, opts)
     countsByLayer[layerId] = result.featureCount
+    if (result.lineStyle) lineStyleByLayer[layerId] = result.lineStyle
   }
 
   if (!noSummary) {
-    printExportSummary(countsByLayer)
+    printExportSummary(countsByLayer, lineStyleByLayer)
   }
 
   if (!dryRun) {
@@ -200,7 +206,7 @@ export async function runGeojsonExport(argv = process.argv.slice(2), options = {
     }
   }
 
-  return { countsByLayer }
+  return { countsByLayer, lineStyleByLayer }
 }
 
 async function main() {

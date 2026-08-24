@@ -39,6 +39,7 @@ export function sqlQuotedNameList(names) {
 /**
  * Stat4 observation window from edition.values.json.
  * OBS_PERIOD_UNTIL omitted → export as-of (or GOSHIP_EDITION_UNTIL env).
+ * OBS_PERIOD_SINCE omitted → Jan 1 of the export-as-of calendar year.
  * @returns {{ since: string, until: string }}
  */
 export function resolveObsPeriodBounds() {
@@ -47,10 +48,8 @@ export function resolveObsPeriodBounds() {
     exportAsOfDate ??
     process.env.GOSHIP_EDITION_UNTIL ??
     new Date().toISOString().slice(0, 10)
-  const since = v.OBS_PERIOD_SINCE?.trim()
-  if (!since) {
-    throw new Error('OBS_PERIOD_SINCE is required in edition.values.json')
-  }
+  const since =
+    v.OBS_PERIOD_SINCE?.trim() || `${asOf.slice(0, 4)}-01-01`
   const until = v.OBS_PERIOD_UNTIL?.trim() || asOf
   return { since, until }
 }

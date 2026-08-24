@@ -15,9 +15,12 @@ const argv = process.argv.slice(2)
 
 try {
   const { byNetwork } = await runPartnerExport(argv, { noSummary: true })
-  const { countsByLayer } = await runGeojsonExport(argv, { noSummary: true })
+  const { countsByLayer, lineStyleByLayer } = await runGeojsonExport(argv, { noSummary: true })
   const obsStats = await runObservationsExport(argv)
-  printCombinedExportSummary(byNetwork, countsByLayer, { EXPORT_EDITION_LABEL, obsStats })
+  printCombinedExportSummary(byNetwork, countsByLayer, lineStyleByLayer, {
+    EXPORT_EDITION_LABEL,
+    obsStats,
+  })
 } catch (err) {
   console.error(err instanceof Error ? err.message : err)
   process.exit(1)

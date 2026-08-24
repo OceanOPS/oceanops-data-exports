@@ -10,13 +10,25 @@ import {
 } from './partner-export/exportConfig.mjs'
 import { NETWORK_KEYS } from './partner-export/networkFilters.mjs'
 import { formatGeojsonSqlHint, formatNetworkSqlHint, GEOJSON_SQL_SOURCE } from './networkSql.mjs'
+import {
+  writeLineStyleSummaryLines,
+  yearFromIsoDate,
+} from './geojson-export/lineStyleSummary.mjs'
+
+/** @param {string} layerId @param {import('./editionValues.mjs').EditionValues} values */
+function lineSampledSinceLabel(layerId, values) {
+  if (layerId === 'goship') return yearFromIsoDate(values.GOSHIP_EDITION_SINCE)
+  if (layerId === 'oceantrax') return yearFromIsoDate(values.SOOP_XBT_SAMPLED_SINCE)
+  return '?'
+}
 
 /**
  * @param {Record<string, Record<string, number>>} byNetwork
  * @param {Record<string, number>} countsByLayer
- * @param {{ EXPORT_EDITION_LABEL?: string }} [config]
+ * @param {Record<string, import('./geojson-export/lineStyleSummary.mjs').LineStyleSummary>} [lineStyleByLayer]
+ * @param {{ EXPORT_EDITION_LABEL?: string, obsStats?: Record<string, unknown> }} [config]
  */
-export function printCombinedExportSummary(byNetwork, countsByLayer, config = {}) {
+export function printCombinedExportSummary(byNetwork, countsByLayer, lineStyleByLayer = {}, config = {}) {
   const edition = config.EXPORT_EDITION_LABEL ?? EXPORT_EDITION_LABEL
   const values = loadEditionValues()
 
@@ -35,6 +47,15 @@ export function printCombinedExportSummary(byNetwork, countsByLayer, config = {}
     process.stderr.write(`${partnerKey} · ${layerId}\n`)
     process.stderr.write(`  Partner total: ${partnerTotal}  |  GeoJSON features: ${geojsonFeatures}\n`)
     process.stderr.write(`  ${renderEditionSummary(summary)}\n`)
+
+    const lineStyle = lineStyleByLayer[layerId]
+    if (lineStyle) {
+      writeLineStyleSummaryLines(
+        process.stderr,
+        lineStyle,
+        lineSampledSinceLabel(layerId, values),
+      )
+    }
 
     const geoSource = GEOJSON_SQL_SOURCE[layerId] ?? 'ptf_loc_n'
     const partnerHint = formatNetworkSqlHint(layerId, sqlSource)

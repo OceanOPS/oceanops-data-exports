@@ -72,18 +72,6 @@ export const OBSERVATIONS_PERIOD_START = '${stats.periodStart ?? ''}'
 
 /** Inclusive end of the averaging window (ISO date). */
 export const OBSERVATIONS_PERIOD_END = '${stats.periodEnd ?? ''}'${yoyLines}
-
-/** Days with at least one observation in the window. */
-export const OBSERVATIONS_DAYS_WITH_DATA = ${stats.daysWithData}
-
-/** Total observations in the window. */
-export const OBSERVATIONS_TOTAL = ${stats.totalObs}
-
-/** Inclusive start of the averaging window (ISO date). */
-export const OBSERVATIONS_PERIOD_START = '${stats.periodStart ?? ''}'
-
-/** Inclusive end of the averaging window (ISO date). */
-export const OBSERVATIONS_PERIOD_END = '${stats.periodEnd ?? ''}'${yoyLines}
 `
 }
 

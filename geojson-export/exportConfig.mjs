@@ -6,7 +6,11 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { NETWORK_KEYS } from '../partner-export/networkFilters.mjs'
-import { renderEditionSummary } from '../editionValues.mjs'
+import { renderEditionSummary, loadEditionValues } from '../editionValues.mjs'
+import {
+  writeLineStyleSummaryLines,
+  yearFromIsoDate,
+} from './lineStyleSummary.mjs'
 import {
   formatGeojsonSqlHint,
   GEOJSON_SQL_SOURCE,
@@ -88,10 +92,12 @@ export function readLayerSql(layerId) {
 
 /**
  * @param {Record<string, unknown>} countsByLayer
+ * @param {Record<string, import('./lineStyleSummary.mjs').LineStyleSummary>} [lineStyleByLayer]
  */
-export function printExportSummary(countsByLayer) {
+export function printExportSummary(countsByLayer, lineStyleByLayer = {}) {
   process.stderr.write('\n--- GeoJSON export summary ---\n')
   process.stderr.write(`Edition: ${EXPORT_EDITION_LABEL}\n\n`)
+  const values = loadEditionValues()
 
   for (const layerId of LAYER_IDS) {
     const entry = LAYER_MANIFEST[layerId]
@@ -101,6 +107,14 @@ export function printExportSummary(countsByLayer) {
     process.stderr.write(
       `  ${partnerKey}: ${count} features — ${renderEditionSummary(entry.summary)}\n`,
     )
+    const lineStyle = lineStyleByLayer[layerId]
+    if (lineStyle) {
+      const sinceYear =
+        layerId === 'goship'
+          ? yearFromIsoDate(values.GOSHIP_EDITION_SINCE)
+          : yearFromIsoDate(values.SOOP_XBT_SAMPLED_SINCE)
+      writeLineStyleSummaryLines(process.stderr, lineStyle, sinceYear)
+    }
     process.stderr.write(`    SQL hint: ${formatGeojsonSqlHint(layerId, sqlSource)}\n`)
     process.stderr.write(`    SQL: sql/${layerId}.sql\n`)
   }

@@ -106,27 +106,7 @@ export function formatIsoDate(date) {
 export function obsDateRangeChunks(periodStart, periodEnd) {
   const since = `'${periodStart}'::timestamp`
   const until = `(('${periodEnd}'::date + INTERVAL '1 day')::timestamp)`
-  const start = new Date(`${periodStart}T12:00:00`)
-  const end = new Date(`${periodEnd}T12:00:00`)
-  const daysSpan = Math.floor((end.getTime() - start.getTime()) / 86400000) + 1
-
-  if (daysSpan <= 31) {
-    return [{ label: `${periodStart} → ${periodEnd}`, fromSql: since, toSql: until }]
-  }
-
-  /** @type {{ label: string, fromSql: string, toSql: string }[]} */
-  const chunks = []
-  const monthSpan = Math.min(12, Math.ceil(daysSpan / 28) + 1)
-  for (let m = 0; m < monthSpan; m += 1) {
-    const from = `(date_trunc('month', ${since}) + INTERVAL '${m} months')`
-    const to = `(date_trunc('month', ${since}) + INTERVAL '${m + 1} months')`
-    chunks.push({
-      label: `month ${m + 1}/${monthSpan}`,
-      fromSql: `GREATEST(${from}, ${since})`,
-      toSql: `LEAST(${to}, ${until})`,
-    })
-  }
-  return chunks
+  return [{ label: `${periodStart} → ${periodEnd}`, fromSql: since, toSql: until }]
 }
 
 /** @param {string} isoDate @param {number} [yearDelta] */
