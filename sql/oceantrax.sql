@@ -40,7 +40,24 @@ latest_cruise AS (
   LEFT JOIN oceanops.ship s ON s.id = c.ship_id
   LEFT JOIN oceanops.country ship_co ON ship_co.id = s.country_id
   WHERE cl.line_id IN (SELECT line_id FROM design_lines)
+    AND c.departure_date <= DATE '{{GOSHIP_EDITION_UNTIL}}'
   ORDER BY cl.line_id, c.departure_date DESC NULLS LAST, c.id DESC
+),
+next_cruise AS (
+  SELECT DISTINCT ON (cl.line_id)
+    cl.line_id,
+    c.id AS cruise_id,
+    c.departure_date,
+    c.ref AS cruise_ref,
+    s.name AS ship_name,
+    ship_co.name AS next_cruise_ship_country
+  FROM oceanops.cruise_line cl
+  JOIN oceanops.cruise c ON c.id = cl.cruise_id
+  LEFT JOIN oceanops.ship s ON s.id = c.ship_id
+  LEFT JOIN oceanops.country ship_co ON ship_co.id = s.country_id
+  WHERE cl.line_id IN (SELECT line_id FROM design_lines)
+    AND c.departure_date > DATE '{{GOSHIP_EDITION_UNTIL}}'
+  ORDER BY cl.line_id, c.departure_date ASC NULLS LAST, c.id ASC
 ),
 latest_cruise_countries AS (
   SELECT lc.line_id,
@@ -48,6 +65,13 @@ latest_cruise_countries AS (
   FROM latest_cruise lc
   JOIN cruise_lead_country clc ON clc.cruise_id = lc.cruise_id
   GROUP BY lc.line_id
+),
+next_cruise_countries AS (
+  SELECT nc.line_id,
+    string_agg(DISTINCT clc.country_name, ', ' ORDER BY clc.country_name) AS next_cruise_countries
+  FROM next_cruise nc
+  JOIN cruise_lead_country clc ON clc.cruise_id = nc.cruise_id
+  GROUP BY nc.line_id
 ),
 edition_sampled AS (
   SELECT DISTINCT cl.line_id
@@ -118,6 +142,23 @@ SELECT jsonb_build_object(
             END
         END,
         'last_cruise_by', COALESCE(NULLIF(lcc.last_cruise_countries, ''), 'Unknown'),
+        'next_cruise_date', to_char(nc.departure_date, 'YYYY-MM-DD'),
+        'next_cruise_ref', nc.cruise_ref,
+        'next_cruise_ship', COALESCE(NULLIF(TRIM(nc.ship_name), ''), ''),
+        'next_cruise_ship_country', COALESCE(NULLIF(TRIM(nc.next_cruise_ship_country), ''), ''),
+        'next_cruise_countries', COALESCE(ncc.next_cruise_countries, ''),
+        'next_cruise_country', COALESCE(ncc.next_cruise_countries, ''),
+        'next_cruise_display', CASE
+          WHEN nc.departure_date IS NULL THEN ''
+          ELSE to_char(nc.departure_date, 'YYYY-MM-DD')
+            || CASE
+              WHEN NULLIF(TRIM(nc.ship_name), '') IS NOT NULL
+                THEN ' (' || TRIM(nc.ship_name) || ')'
+              WHEN nc.cruise_ref IS NOT NULL
+                THEN ' (' || nc.cruise_ref || ')'
+              ELSE ''
+            END
+        END,
         'edition_country_codes', COALESCE(lec.country_codes, ''),
         'edition_cruises', COALESCE(ec.edition_cruises, '[]'::jsonb)::text,
         'edition_status', CASE
@@ -133,7 +174,9 @@ SELECT jsonb_build_object(
 FROM design_lines d
 LEFT JOIN edition_sampled es ON es.line_id = d.line_id
 LEFT JOIN latest_cruise lc ON lc.line_id = d.line_id
+LEFT JOIN next_cruise nc ON nc.line_id = d.line_id
 LEFT JOIN latest_cruise_countries lcc ON lcc.line_id = d.line_id
+LEFT JOIN next_cruise_countries ncc ON ncc.line_id = d.line_id
 LEFT JOIN line_edition_countries lec ON lec.line_id = d.line_id
 LEFT JOIN edition_cruises ec ON ec.line_id = d.line_id;
 
