@@ -93,13 +93,14 @@ export function readLayerSql(layerId) {
 /**
  * @param {Record<string, unknown>} countsByLayer
  * @param {Record<string, import('./lineStyleSummary.mjs').LineStyleSummary>} [lineStyleByLayer]
+ * @param {string[]} [layerIds] layers exported this run (defaults to full manifest order)
  */
-export function printExportSummary(countsByLayer, lineStyleByLayer = {}) {
+export function printExportSummary(countsByLayer, lineStyleByLayer = {}, layerIds = LAYER_IDS) {
   process.stderr.write('\n--- GeoJSON export summary ---\n')
   process.stderr.write(`Edition: ${EXPORT_EDITION_LABEL}\n\n`)
   const values = loadEditionValues()
 
-  for (const layerId of LAYER_IDS) {
+  for (const layerId of layerIds) {
     const entry = LAYER_MANIFEST[layerId]
     const count = countsByLayer[layerId] ?? 0
     const partnerKey = LAYER_ID_TO_PARTNER_KEY[layerId] ?? layerId

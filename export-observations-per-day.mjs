@@ -8,7 +8,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { formatDatabaseUrlForLog, runPsqlQuery } from './geojson-export/db.mjs'
 import { loadDotEnv } from './databaseUrl.mjs'
-import { buildExportMetadata } from './editionMetadata.mjs'
+import { buildExportMetadata, patchExportMetadata } from './editionMetadata.mjs'
 import { resolveObsPeriodBounds, setExportAsOfDate } from './editionValues.mjs'
 import { resolveExportPaths } from './paths.mjs'
 import {
@@ -73,21 +73,6 @@ export const OBSERVATIONS_PERIOD_START = '${stats.periodStart ?? ''}'
 /** Inclusive end of the averaging window (ISO date). */
 export const OBSERVATIONS_PERIOD_END = '${stats.periodEnd ?? ''}'${yoyLines}
 `
-}
-
-/** @param {string} metadataPath @param {Record<string, unknown>} patch */
-function patchExportMetadata(metadataPath, patch) {
-  /** @type {Record<string, unknown>} */
-  let metadata = buildExportMetadata()
-  if (fs.existsSync(metadataPath)) {
-    metadata = { ...metadata, ...JSON.parse(fs.readFileSync(metadataPath, 'utf8')) }
-  }
-  fs.mkdirSync(path.dirname(metadataPath), { recursive: true })
-  fs.writeFileSync(
-    metadataPath,
-    `${JSON.stringify({ ...metadata, ...patch }, null, 2)}\n`,
-    'utf8',
-  )
 }
 
 /**
@@ -444,6 +429,7 @@ export async function runObservationsExport(argv = [], opts = {}) {
     )
 
     const metadataPatch = {
+      ...buildExportMetadata(exportedAt),
       OBSERVATIONS_PER_DAY_AVG: avgObsPerDay,
       OBS_PERIOD_SINCE: periodSince,
       OBS_PERIOD_UNTIL: periodUntil,

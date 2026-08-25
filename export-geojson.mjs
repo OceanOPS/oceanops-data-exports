@@ -3,7 +3,7 @@
  * Export static GeoJSON map layers from OceanOPS PostgreSQL.
  *
  * Usage:
- *   node export-geojson.mjs [--dry-run] [--no-summary] [--layer=argo] [--no-densify]
+ *   node export-geojson.mjs [--dry-run] [--no-summary] [--layer=goship] [--layer=oceantrax] [--no-densify]
  *
  * Output: {geojson-dir}/{layerId}.geojson (default: simple-map public/geojson)
  *
@@ -17,7 +17,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { formatDatabaseUrlForLog, loadDotEnv } from './databaseUrl.mjs'
-import { buildExportMetadata } from './editionMetadata.mjs'
+import { buildExportMetadata, patchExportMetadata } from './editionMetadata.mjs'
 import { setExportAsOfDate } from './editionValues.mjs'
 import { assertPsqlAvailable, runPsqlQuery } from './geojson-export/db.mjs'
 
@@ -40,11 +40,25 @@ import {
 
 const __filename = fileURLToPath(import.meta.url)
 
+/** @param {string[]} argv @returns {string[] | null} */
+function parseLayerFilter(argv) {
+  /** @type {string[]} */
+  const layers = []
+  for (const arg of argv) {
+    if (!arg.startsWith('--layer=')) continue
+    const value = arg.slice('--layer='.length)
+    for (const id of value.split(',')) {
+      const trimmed = id.trim()
+      if (trimmed) layers.push(trimmed)
+    }
+  }
+  return layers.length > 0 ? layers : null
+}
+
 /** @param {string[]} argv */
 function parseGeojsonArgs(argv) {
   const exportPaths = resolveExportPaths(argv)
-  const layerArg = argv.find((arg) => arg.startsWith('--layer='))?.split('=')[1]
-  const layerFilter = layerArg ? layerArg.split(',').map((id) => id.trim()).filter(Boolean) : null
+  const layerFilter = parseLayerFilter(argv)
   return {
     exportPaths,
     outputDir: exportPaths.GEOJSON_OUTPUT_DIR,
@@ -173,19 +187,14 @@ export async function runGeojsonExport(argv = process.argv.slice(2), options = {
   }
 
   if (!noSummary) {
-    printExportSummary(countsByLayer, lineStyleByLayer)
+    printExportSummary(countsByLayer, lineStyleByLayer, layerIds)
   }
 
   if (!dryRun) {
     process.stderr.write(`\nWrote GeoJSON to ${path.relative(SIMPLE_MAP_ROOT, OUTPUT_DIR)}/\n`)
-    const exportedAt = new Date().toISOString().slice(0, 10)
-    const exportMetadata = buildExportMetadata(exportedAt)
+    const metadataPatch = buildExportMetadata(exportedAt)
     const metadataPath = path.join(OUTPUT_DIR, 'export-metadata.json')
-    fs.writeFileSync(
-      metadataPath,
-      `${JSON.stringify(exportMetadata, null, 2)}\n`,
-      'utf8'
-    )
+    patchExportMetadata(metadataPath, metadataPatch)
     process.stderr.write(`  → ${path.relative(SIMPLE_MAP_ROOT, metadataPath)}\n`)
 
     const reportCardRoot = exportPaths.REPORT_CARD_ROOT
@@ -194,12 +203,7 @@ export async function runGeojsonExport(argv = process.argv.slice(2), options = {
         reportCardRoot,
         'public/edition/export-metadata.json',
       )
-      fs.mkdirSync(path.dirname(reportCardMetadataPath), { recursive: true })
-      fs.writeFileSync(
-        reportCardMetadataPath,
-        `${JSON.stringify(exportMetadata, null, 2)}\n`,
-        'utf8'
-      )
+      patchExportMetadata(reportCardMetadataPath, metadataPatch)
       process.stderr.write(
         `  → ${path.relative(reportCardRoot, reportCardMetadataPath)} (report-card)\n`,
       )

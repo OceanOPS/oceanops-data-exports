@@ -3,6 +3,8 @@
  * Only includes values that appear in sql/*.sql (@where tokens).
  */
 
+import fs from 'node:fs'
+import path from 'node:path'
 import { loadEditionValues, resolveObsPeriodBounds } from './editionValues.mjs'
 
 /** @returns {Record<string, string>} */
@@ -28,4 +30,23 @@ export function buildExportMetadata(asOfDate) {
     exportedAt: asOfDate ?? new Date().toISOString().slice(0, 10),
     ...buildEditionMetadata(),
   }
+}
+
+/**
+ * Merge patch into export-metadata.json (preserves keys not in patch, e.g. OBS_* from observations export).
+ * @param {string} metadataPath
+ * @param {Record<string, unknown>} patch
+ */
+export function patchExportMetadata(metadataPath, patch) {
+  /** @type {Record<string, unknown>} */
+  let metadata = {}
+  if (fs.existsSync(metadataPath)) {
+    metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'))
+  }
+  fs.mkdirSync(path.dirname(metadataPath), { recursive: true })
+  fs.writeFileSync(
+    metadataPath,
+    `${JSON.stringify({ ...metadata, ...patch }, null, 2)}\n`,
+    'utf8',
+  )
 }

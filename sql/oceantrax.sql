@@ -65,6 +65,27 @@ line_edition_countries AS (
   WHERE cl.line_id IN (SELECT line_id FROM design_lines)
     AND cr.departure_date >= DATE '{{SOOP_XBT_SAMPLED_SINCE}}'
   GROUP BY cl.line_id
+),
+edition_cruises AS (
+  SELECT cl.line_id,
+    jsonb_agg(
+      jsonb_build_object(
+        'cruise_ref', c.ref,
+        'cruise_date', to_char(c.departure_date, 'YYYY-MM-DD'),
+        'ship_name', COALESCE(NULLIF(TRIM(s.name), ''), ''),
+        'ship_country', COALESCE(NULLIF(TRIM(ship_co.name), ''), ''),
+        'program_country', COALESCE(NULLIF(TRIM(clc.country_name), ''), '')
+      )
+      ORDER BY c.departure_date DESC NULLS LAST, c.id DESC
+    ) AS edition_cruises
+  FROM oceanops.cruise_line cl
+  JOIN oceanops.cruise c ON c.id = cl.cruise_id
+  LEFT JOIN oceanops.ship s ON s.id = c.ship_id
+  LEFT JOIN oceanops.country ship_co ON ship_co.id = s.country_id
+  LEFT JOIN cruise_lead_country clc ON clc.cruise_id = c.id
+  WHERE cl.line_id IN (SELECT line_id FROM design_lines)
+    AND c.departure_date >= DATE '{{SOOP_XBT_SAMPLED_SINCE}}'
+  GROUP BY cl.line_id
 )
 SELECT jsonb_build_object(
   'type', 'FeatureCollection',
@@ -98,6 +119,7 @@ SELECT jsonb_build_object(
         END,
         'last_cruise_by', COALESCE(NULLIF(lcc.last_cruise_countries, ''), 'Unknown'),
         'edition_country_codes', COALESCE(lec.country_codes, ''),
+        'edition_cruises', COALESCE(ec.edition_cruises, '[]'::jsonb)::text,
         'edition_status', CASE
           WHEN es.line_id IS NOT NULL THEN 'Sampled since ' || to_char(DATE '{{SOOP_XBT_SAMPLED_SINCE}}', 'YYYY')
           WHEN lc.departure_date IS NULL THEN 'No cruise recorded'
@@ -112,7 +134,8 @@ FROM design_lines d
 LEFT JOIN edition_sampled es ON es.line_id = d.line_id
 LEFT JOIN latest_cruise lc ON lc.line_id = d.line_id
 LEFT JOIN latest_cruise_countries lcc ON lcc.line_id = d.line_id
-LEFT JOIN line_edition_countries lec ON lec.line_id = d.line_id;
+LEFT JOIN line_edition_countries lec ON lec.line_id = d.line_id
+LEFT JOIN edition_cruises ec ON ec.line_id = d.line_id;
 
 -- @partner
 -- Per-country lines with edition cruises: cruise_line → cruise → cruise_program (lead) → program.country
