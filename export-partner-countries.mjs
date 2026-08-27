@@ -299,7 +299,7 @@ export async function runPartnerExport(argv = process.argv.slice(2), options = {
   process.stderr.write(`Wrote ${OUTPUT_JSON} (contributingCountries: ${contributingCountries})\n`)
 
   if (fs.existsSync(exportPaths.REPORT_CARD_ROOT)) {
-    writeContributingCountriesYoy(exportPaths.REPORT_CARD_ROOT, contributingIsos)
+    writeContributingCountriesYoy(exportPaths.REPORT_CARD_ROOT, contributingIsos, countries)
   }
 
   if (!noSummary) {
@@ -310,10 +310,40 @@ export async function runPartnerExport(argv = process.argv.slice(2), options = {
 }
 
 /**
+ * @param {Map<string, Record<string, number>>} countries
+ * @param {string} iso
+ * @returns {{ id: string, count: number }[]}
+ */
+function networkBreakdownForIso(countries, iso) {
+  const nets = countries.get(iso)
+  if (!nets) return []
+  return NETWORK_KEYS.filter((key) => (nets[key] ?? 0) > 0).map((key) => ({
+    id: key,
+    count: nets[key],
+  }))
+}
+
+/**
+ * @param {Map<string, Record<string, number>>} countries
+ * @param {string[]} isos
+ * @returns {Record<string, { id: string, count: number }[]>}
+ */
+function buildNetworksByIso(countries, isos) {
+  /** @type {Record<string, { id: string, count: number }[]>} */
+  const networksByIso = {}
+  for (const iso of isos) {
+    const networks = networkBreakdownForIso(countries, iso)
+    if (networks.length > 0) networksByIso[iso] = networks
+  }
+  return networksByIso
+}
+
+/**
  * @param {string} reportCardRoot
  * @param {string[]} currentIsos
+ * @param {Map<string, Record<string, number>>} countries
  */
-function writeContributingCountriesYoy(reportCardRoot, currentIsos) {
+function writeContributingCountriesYoy(reportCardRoot, currentIsos, countries) {
   const editionDir = path.join(reportCardRoot, 'public/edition')
   const baselinePath = path.join(editionDir, 'contributing-countries-baseline.json')
   const snapshotPath = path.join(editionDir, 'contributing-countries-snapshot.json')
@@ -321,6 +351,8 @@ function writeContributingCountriesYoy(reportCardRoot, currentIsos) {
 
   /** @type {string[]} */
   let previousIsos = []
+  /** @type {Record<string, { id: string, count: number }[]>} */
+  let previousNetworksByIso = {}
   let previousYear = '2025'
   let previousSource = 'none'
 
@@ -334,6 +366,11 @@ function writeContributingCountriesYoy(reportCardRoot, currentIsos) {
     previousIsos = snapshot.isos ?? []
     previousYear = String(snapshot.year ?? previousYear)
     previousSource = 'snapshot'
+  }
+
+  if (fs.existsSync(snapshotPath)) {
+    const snapshot = JSON.parse(fs.readFileSync(snapshotPath, 'utf8'))
+    previousNetworksByIso = snapshot.networksByIso ?? {}
   }
 
   const prevSet = new Set(previousIsos)
@@ -356,12 +393,14 @@ function writeContributingCountriesYoy(reportCardRoot, currentIsos) {
       : appeared.map((iso) => ({
           iso,
           name: ISO_COUNTRY_NAMES[iso] ?? iso,
+          networks: networkBreakdownForIso(countries, iso),
         })),
     disappeared: baselineMissing
       ? []
       : disappeared.map((iso) => ({
           iso,
           name: ISO_COUNTRY_NAMES[iso] ?? iso,
+          networks: previousNetworksByIso[iso] ?? [],
         })),
   }
 
@@ -374,6 +413,7 @@ function writeContributingCountriesYoy(reportCardRoot, currentIsos) {
         exportedAt: payload.exportedAt,
         year: new Date().getFullYear(),
         isos: currentIsos,
+        networksByIso: buildNetworksByIso(countries, currentIsos),
       },
       null,
       2,
