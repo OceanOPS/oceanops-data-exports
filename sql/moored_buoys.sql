@@ -1,12 +1,12 @@
 -- Layer: moored_buoys
--- OPERATIONAL moored buoys (excl. OceanSITES)
+-- OPERATIONAL moored buoys
 -- Edit WHERE (or line IN list) here, test in pgAdmin, then: npm run export:geojson
 --   psql "$OCEANOPS_DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/moored_buoys.sql
 -- Edit filter under @where; edition.values.json for dates / line lists.
 -- pgAdmin: npm run render:sql -- sql/moored_buoys.sql
 
 -- @where
-t.ptf_status = 6 AND t.ptf_family = 'MB' AND t.network NOT LIKE '%OceanSITES%'
+t.ptf_status = 6 AND t.ptf_family = 'MB'
 
 -- @geojson
 SELECT jsonb_build_object(
