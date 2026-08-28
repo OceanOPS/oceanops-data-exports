@@ -9,6 +9,8 @@
 t.network ILIKE '%FVON%' AND t.ptf_status IN ({{LAYER_TABLE_PTF_STATUS_IN}}) AND t.latest_loc_date >= DATE '{{FVON_MIN_LOC_DATE}}'
 AND t.country IS NOT NULL
 AND TRIM(t.country) <> ''
+AND t.country_iso_code2 IS NOT NULL
+AND TRIM(t.country_iso_code2) <> ''
 
 -- @geojson
 SELECT jsonb_build_object(
@@ -46,7 +48,5 @@ WHERE {{WHERE}};
 SELECT t.country_iso_code2, COUNT(*)::int
 FROM oceanops_gis.ptf_loc_n AS t
 WHERE ({{WHERE}})
-  AND t.country_iso_code2 IS NOT NULL
-  AND TRIM(t.country_iso_code2) <> ''
 GROUP BY t.country_iso_code2
 ORDER BY t.country_iso_code2;

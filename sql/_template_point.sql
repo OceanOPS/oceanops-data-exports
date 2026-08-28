@@ -9,12 +9,16 @@
 -- country_ship / country_sensor_provider: one row per ptf_id (views may return multiple matches).
 -- To omit ship or sensor country from popups, comment out JOIN + property lines in @geojson.
 --
--- country_name comes from t.country (exclude null/blank program country).
+-- @where and @partner share {{WHERE}} so GeoJSON feature count = SUM(partner counts by country).
+-- After network-specific filters, require program country (name + ISO code2).
+-- (ptf_loc_n.shape is always set by update_latest_loc when lat/lon exist.)
 
 -- @where
 upper(t.network) LIKE '%ARGO%' AND t.ptf_status = 6
 AND t.country IS NOT NULL
 AND TRIM(t.country) <> ''
+AND t.country_iso_code2 IS NOT NULL
+AND TRIM(t.country_iso_code2) <> ''
 
 -- @geojson
 SELECT jsonb_build_object(
@@ -49,10 +53,9 @@ LEFT JOIN (
 WHERE {{WHERE}};
 
 -- @partner
+-- Same {{WHERE}} as @geojson (do not add extra country filters here).
 SELECT t.country_iso_code2, COUNT(*)::int
 FROM oceanops_gis.ptf_loc_n AS t
 WHERE ({{WHERE}})
-  AND t.country_iso_code2 IS NOT NULL
-  AND TRIM(t.country_iso_code2) <> ''
 GROUP BY t.country_iso_code2
 ORDER BY t.country_iso_code2;
