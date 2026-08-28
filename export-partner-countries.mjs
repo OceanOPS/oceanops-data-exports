@@ -352,6 +352,8 @@ function writeContributingCountriesYoy(reportCardRoot, currentIsos, countries) {
   /** @type {string[]} */
   let previousIsos = []
   /** @type {Record<string, { id: string, count: number }[]>} */
+  let baselineNetworksByIso = {}
+  /** @type {Record<string, { id: string, count: number }[]>} */
   let previousNetworksByIso = {}
   let previousYear = '2025'
   let previousSource = 'none'
@@ -361,6 +363,7 @@ function writeContributingCountriesYoy(reportCardRoot, currentIsos, countries) {
     previousIsos = baseline.isos ?? []
     previousYear = String(baseline.year ?? previousYear)
     previousSource = 'baseline'
+    baselineNetworksByIso = baseline.networksByIso ?? {}
   } else if (fs.existsSync(snapshotPath)) {
     const snapshot = JSON.parse(fs.readFileSync(snapshotPath, 'utf8'))
     previousIsos = snapshot.isos ?? []
@@ -400,7 +403,7 @@ function writeContributingCountriesYoy(reportCardRoot, currentIsos, countries) {
       : disappeared.map((iso) => ({
           iso,
           name: ISO_COUNTRY_NAMES[iso] ?? iso,
-          networks: previousNetworksByIso[iso] ?? [],
+          networks: baselineNetworksByIso[iso] ?? previousNetworksByIso[iso] ?? [],
         })),
   }
 
