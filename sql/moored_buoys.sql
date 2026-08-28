@@ -6,7 +6,7 @@
 -- pgAdmin: npm run render:sql -- sql/moored_buoys.sql
 
 -- @where
-t.ptf_status = 6 AND t.ptf_family = 'MB'
+upper(t.network) LIKE '%MOORED BUOY NETWORK%' AND t.ptf_status = 6
 
 -- @geojson
 SELECT jsonb_build_object(
