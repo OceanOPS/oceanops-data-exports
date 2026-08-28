@@ -6,7 +6,7 @@
 -- 4. Register in `geojson-export/layers.manifest.json`
 -- 5. pgAdmin: npm run render:sql -- sql/<layerId>.sql
 --
--- country_ship: v_ptf_depl_rv.ship_country only (no fallback to ship registry — keeps deployment history semantics).
+-- country_ship / country_sensor_provider: one row per ptf_id (views may return multiple matches).
 -- To omit ship or sensor country from popups, comment out JOIN + property lines in @geojson.
 
 -- @where
@@ -32,8 +32,16 @@ SELECT jsonb_build_object(
   ), '[]'::jsonb)
 )
 FROM oceanops_gis.ptf_loc_n AS t
-LEFT JOIN oceanops.v_ptf_depl_rv rv ON t.ptf_id = rv.ptf_id
-LEFT JOIN oceanops.v_sensor_provider sp ON t.ptf_id = sp.ptf_id
+LEFT JOIN (
+  SELECT DISTINCT ON (ptf_id) ptf_id, ship_country
+  FROM oceanops.v_ptf_depl_rv
+  ORDER BY ptf_id, deployment_date DESC NULLS LAST
+) rv ON t.ptf_id = rv.ptf_id
+LEFT JOIN (
+  SELECT DISTINCT ON (ptf_id) ptf_id, sensor_country
+  FROM oceanops.v_sensor_provider
+  ORDER BY ptf_id, sensor_model
+) sp ON t.ptf_id = sp.ptf_id
 WHERE {{WHERE}};
 
 -- @partner
