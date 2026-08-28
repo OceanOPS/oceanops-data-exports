@@ -3,6 +3,7 @@
 -- Do not COALESCE line_type: NULL line_type must be excluded (matches GIS / colleague query).
 -- Map: all design lines; solid = cruise in [GOSHIP_EDITION_SINCE, export date]; dash = all others
 -- Country attribution: cruise_program (lead = 1) → program.country_id (not cruise_country)
+-- Ship name/country omitted when ship.hide_metadata = 1 (same rule as v_ptf_depl_rv on point layers).
 -- Edit filter under @where; edition.values.json for date tokens
 
 -- @where
@@ -34,8 +35,9 @@ latest_cruise AS (
     c.id AS cruise_id,
     c.departure_date,
     c.ref AS cruise_ref,
-    s.name AS ship_name,
-    ship_co.name AS last_cruise_ship_country
+    (COALESCE(s.hide_metadata, 0) = 1) AS ship_masked,
+    CASE WHEN COALESCE(s.hide_metadata, 0) = 1 THEN NULL ELSE s.name END AS ship_name,
+    CASE WHEN COALESCE(s.hide_metadata, 0) = 1 THEN NULL ELSE ship_co.name END AS last_cruise_ship_country
   FROM oceanops.cruise_line cl
   JOIN oceanops.cruise c ON c.id = cl.cruise_id
   LEFT JOIN oceanops.ship s ON s.id = c.ship_id
@@ -50,8 +52,9 @@ next_cruise AS (
     c.id AS cruise_id,
     c.departure_date,
     c.ref AS cruise_ref,
-    s.name AS ship_name,
-    ship_co.name AS next_cruise_ship_country
+    (COALESCE(s.hide_metadata, 0) = 1) AS ship_masked,
+    CASE WHEN COALESCE(s.hide_metadata, 0) = 1 THEN NULL ELSE s.name END AS ship_name,
+    CASE WHEN COALESCE(s.hide_metadata, 0) = 1 THEN NULL ELSE ship_co.name END AS next_cruise_ship_country
   FROM oceanops.cruise_line cl
   JOIN oceanops.cruise c ON c.id = cl.cruise_id
   LEFT JOIN oceanops.ship s ON s.id = c.ship_id
@@ -116,8 +119,9 @@ edition_cruises AS (
       jsonb_build_object(
         'cruise_ref', c.ref,
         'cruise_date', to_char(c.departure_date, 'YYYY-MM-DD'),
-        'ship_name', COALESCE(NULLIF(TRIM(s.name), ''), ''),
-        'ship_country', COALESCE(NULLIF(TRIM(ship_co.name), ''), ''),
+        'ship_masked', (COALESCE(s.hide_metadata, 0) = 1),
+        'ship_name', CASE WHEN COALESCE(s.hide_metadata, 0) = 1 THEN '' ELSE COALESCE(NULLIF(TRIM(s.name), ''), '') END,
+        'ship_country', CASE WHEN COALESCE(s.hide_metadata, 0) = 1 THEN '' ELSE COALESCE(NULLIF(TRIM(ship_co.name), ''), '') END,
         'program_country', COALESCE(NULLIF(TRIM(clc.country_name), ''), '')
       )
       ORDER BY c.departure_date DESC NULLS LAST, c.id DESC
@@ -147,6 +151,7 @@ SELECT jsonb_build_object(
         'last_cruise_date', to_char(lc.departure_date, 'YYYY-MM-DD'),
         'last_cruise_ref', lc.cruise_ref,
         'last_cruise_ship', COALESCE(NULLIF(TRIM(lc.ship_name), ''), ''),
+        'last_cruise_ship_masked', COALESCE(lc.ship_masked, false),
         'last_cruise_ship_country', COALESCE(NULLIF(TRIM(lc.last_cruise_ship_country), ''), ''),
         'last_cruise_countries', COALESCE(lcc.last_cruise_countries, ''),
         'last_cruise_country', COALESCE(lcc.last_cruise_countries, ''),
@@ -154,6 +159,7 @@ SELECT jsonb_build_object(
           WHEN lc.departure_date IS NULL THEN 'No cruise recorded'
           ELSE to_char(lc.departure_date, 'YYYY-MM-DD')
             || CASE
+              WHEN lc.ship_masked THEN ''
               WHEN NULLIF(TRIM(lc.ship_name), '') IS NOT NULL
                 THEN ' (' || TRIM(lc.ship_name) || ')'
               WHEN lc.cruise_ref IS NOT NULL
@@ -165,6 +171,7 @@ SELECT jsonb_build_object(
         'next_cruise_date', to_char(nc.departure_date, 'YYYY-MM-DD'),
         'next_cruise_ref', nc.cruise_ref,
         'next_cruise_ship', COALESCE(NULLIF(TRIM(nc.ship_name), ''), ''),
+        'next_cruise_ship_masked', COALESCE(nc.ship_masked, false),
         'next_cruise_ship_country', COALESCE(NULLIF(TRIM(nc.next_cruise_ship_country), ''), ''),
         'next_cruise_countries', COALESCE(ncc.next_cruise_countries, ''),
         'next_cruise_country', COALESCE(ncc.next_cruise_countries, ''),
@@ -172,6 +179,7 @@ SELECT jsonb_build_object(
           WHEN nc.departure_date IS NULL THEN ''
           ELSE to_char(nc.departure_date, 'YYYY-MM-DD')
             || CASE
+              WHEN nc.ship_masked THEN ''
               WHEN NULLIF(TRIM(nc.ship_name), '') IS NOT NULL
                 THEN ' (' || TRIM(nc.ship_name) || ')'
               WHEN nc.cruise_ref IS NOT NULL
