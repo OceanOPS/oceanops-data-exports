@@ -7,6 +7,8 @@
 
 -- @where
 t.ptf_status = 6 AND t.network LIKE '%VOS%' AND (t.ptf_type = 'VOS_MWS' OR t.ptf_type = 'VOS_AWS')
+AND t.country IS NOT NULL
+AND TRIM(t.country) <> ''
 
 -- @geojson
 SELECT jsonb_build_object(

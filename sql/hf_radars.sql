@@ -7,6 +7,8 @@
 
 -- @where
 t.ptf_type = 'HF_RADAR'
+AND t.country IS NOT NULL
+AND TRIM(t.country) <> ''
 
 -- @geojson
 SELECT jsonb_build_object(

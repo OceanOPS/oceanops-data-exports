@@ -8,9 +8,13 @@
 --
 -- country_ship / country_sensor_provider: one row per ptf_id (views may return multiple matches).
 -- To omit ship or sensor country from popups, comment out JOIN + property lines in @geojson.
+--
+-- country_name comes from t.country (exclude null/blank program country).
 
 -- @where
 upper(t.network) LIKE '%ARGO%' AND t.ptf_status = 6
+AND t.country IS NOT NULL
+AND TRIM(t.country) <> ''
 
 -- @geojson
 SELECT jsonb_build_object(

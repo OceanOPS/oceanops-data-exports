@@ -7,6 +7,8 @@
 
 -- @where
 upper(t.network) LIKE '%ARGO%' AND t.ptf_status = 6
+AND t.country IS NOT NULL
+AND TRIM(t.country) <> ''
 
 -- @geojson
 SELECT jsonb_build_object(

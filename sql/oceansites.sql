@@ -7,6 +7,8 @@
 
 -- @where
 t.ptf_status IN (4, 6) AND t.network LIKE '%OceanSITES%'
+AND t.country IS NOT NULL
+AND TRIM(t.country) <> ''
 
 -- @geojson
 SELECT jsonb_build_object(

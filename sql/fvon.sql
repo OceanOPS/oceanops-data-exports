@@ -7,6 +7,8 @@
 
 -- @where
 t.network ILIKE '%FVON%' AND t.ptf_status IN ({{LAYER_TABLE_PTF_STATUS_IN}}) AND t.latest_loc_date >= DATE '{{FVON_MIN_LOC_DATE}}'
+AND t.country IS NOT NULL
+AND TRIM(t.country) <> ''
 
 -- @geojson
 SELECT jsonb_build_object(
