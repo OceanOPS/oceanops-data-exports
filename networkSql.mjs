@@ -29,7 +29,7 @@ export const PARTNER_KEY_TO_LAYER_ID = {
   tsunamiBuoys: 'tsunami_buoys',
   hfRadars: 'hf_radars',
   goShip: 'goship',
-  sot: 'oceantrax',
+  oceantrax: 'oceantrax',
 }
 
 /** @type {Record<string, string>} */

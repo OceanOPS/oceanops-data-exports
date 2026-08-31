@@ -1,5 +1,5 @@
 /**
- * Partner counts maintained by hand when PostgreSQL cannot supply them (Ocean TraX / sot).
+ * Partner counts maintained by hand when PostgreSQL cannot supply them (Ocean TraX).
  */
 
 import fs from 'node:fs'
@@ -12,7 +12,7 @@ export const MANUAL_PARTNER_COUNTS_DIR = path.join(__dirname, 'manual')
 
 /** Partner export key → manual file basename (matches map layer id). */
 const MANUAL_PARTNER_FILE_BASENAME = {
-  sot: 'oceantrax',
+  oceantrax: 'oceantrax',
 }
 
 /** Partner keys that read partner-export/manual/{layerId}.json instead of sql @partner. */

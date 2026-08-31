@@ -10,7 +10,7 @@ export const NETWORK_KEYS = [
   'fvon',
   'sotVos',
   'sotAsap',
-  'sot',
+  'oceantrax',
   'goShip',
   'gloss',
   'oceanSites',
@@ -19,7 +19,7 @@ export const NETWORK_KEYS = [
   'hfRadars',
 ]
 
-export const LINE_NETWORK_KEYS = ['goShip', 'sot']
+export const LINE_NETWORK_KEYS = ['goShip', 'oceantrax']
 
 export const PLATFORM_NETWORK_KEYS = NETWORK_KEYS.filter(
   (key) => !LINE_NETWORK_KEYS.includes(key),

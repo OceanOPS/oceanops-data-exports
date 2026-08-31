@@ -26,7 +26,7 @@ export const NETWORK_CRITERIA = {
   fvon: { summary: 'FVON — layer-table statuses + latest_loc_date cutoff', layerId: 'fvon', sqlSource: 'ptf_loc_n' },
   sotVos: { summary: 'OPERATIONAL SOT/VOS ships', layerId: 'vos', sqlSource: 'ptf_loc_n' },
   sotAsap: { summary: 'OPERATIONAL ASAP ships', layerId: 'asap', sqlSource: 'ptf_loc_n' },
-  sot: { summary: 'Ocean TraX — partner counts from partner-export/manual/oceantrax.json (manual ISO → count; map lines from sql/oceantrax.sql @geojson)', layerId: 'oceantrax', sqlSource: 'manual' },
+  oceantrax: { summary: 'Ocean TraX — partner counts from partner-export/manual/oceantrax.json (manual ISO → count; map lines from sql/oceantrax.sql @geojson)', layerId: 'oceantrax', sqlSource: 'manual' },
   goShip: { summary: 'GO-SHIP — line_type <> Associated, name <> P03; partner counts = edition cruises (lead program country) since GOSHIP_EDITION_SINCE', layerId: 'goship', sqlSource: 'cruise_program' },
   gloss: { summary: 'OPERATIONAL GLOSS sea-level gauges', layerId: 'gloss', sqlSource: 'ptf_loc_n' },
   oceanSites: { summary: 'OceanSITES moorings — OPERATIONAL or INACTIVE', layerId: 'oceansites', sqlSource: 'ptf_loc_n' },

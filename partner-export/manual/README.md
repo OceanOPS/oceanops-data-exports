@@ -4,7 +4,7 @@ Some networks cannot be counted reliably from PostgreSQL. For those, edit the JS
 
 | File | Partner key (internal) | Map layer |
 |------|------------------------|-----------|
-| `oceantrax.json` | `sot` | Ocean TraX |
+| `oceantrax.json` | `oceantrax` | Ocean TraX |
 
 ## Format
 
