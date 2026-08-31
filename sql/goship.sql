@@ -214,6 +214,7 @@ LEFT JOIN edition_cruises ec ON ec.line_id = d.line_id;
 
 -- @partner
 -- Per-country edition cruises on GO-SHIP design lines (lead program country; counts cruises, not distinct lines)
+-- Reporting ISO: sql/_partner_country_iso.sql (HK→CN, EN→EU, exclude AQ/UN/…)
 SET search_path TO oceanops, oceanops_gis, public;
 WITH design_lines AS (
   SELECT DISTINCT g.line_id
@@ -232,12 +233,13 @@ cruise_lead_country AS (
     AND co.code2 IS NOT NULL
     AND TRIM(co.code2) <> ''
 )
-SELECT clc.country_code2 AS code2, COUNT(DISTINCT cr.id)::int AS line_count
+SELECT {{PARTNER_COUNTRY_ISO:clc.country_code2}} AS code2, COUNT(DISTINCT cr.id)::int AS line_count
 FROM design_lines dl
 JOIN cruise_line cl ON cl.line_id = dl.line_id
 JOIN cruise cr ON cr.id = cl.cruise_id
   AND cr.departure_date >= DATE '{{GOSHIP_EDITION_SINCE}}'
   AND cr.departure_date <= DATE '{{GOSHIP_EDITION_UNTIL}}'
 JOIN cruise_lead_country clc ON clc.cruise_id = cr.id
-GROUP BY clc.country_code2
-ORDER BY clc.country_code2;
+GROUP BY 1
+HAVING {{PARTNER_COUNTRY_ISO:clc.country_code2}} IS NOT NULL
+ORDER BY 1;

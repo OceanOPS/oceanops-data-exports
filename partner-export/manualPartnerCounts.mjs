@@ -5,10 +5,15 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { normalizePartnerIso } from './countryRollup.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export const MANUAL_PARTNER_COUNTS_DIR = path.join(__dirname, 'manual')
+
+/** ISO codes that must not appear in manual files (see sql/_partner_country_iso.sql). */
+const EXCLUDED_REPORTING_ISO = new Set(['AQ', 'UN', 'UNKNOWN', 'U-'])
+
+/** Raw ISO codes that SQL rolls up — use reporting ISO in manual files instead. */
+const LEGACY_RAW_ISO = new Set(['HK', 'EN'])
 
 /** Partner export key → manual file basename (matches map layer id). */
 const MANUAL_PARTNER_FILE_BASENAME = {
@@ -47,7 +52,7 @@ export function loadManualPartnerCounts(networkKey) {
   if (!fs.existsSync(filePath)) {
     throw new Error(
       `Missing manual partner counts for "${networkKey}": ${filePath}\n` +
-        'Create the file with ISO 3166-1 alpha-2 keys and integer counts, e.g. { "AU": 2, "US": 5 }',
+        'Create the file with reporting ISO codes and integer counts, e.g. { "AU": 2, "CN": 3 } (see sql/_partner_country_iso.sql)',
     )
   }
 
@@ -70,9 +75,19 @@ export function loadManualPartnerCounts(networkKey) {
   for (const [code, value] of Object.entries(parsed)) {
     if (code.startsWith('_')) continue
 
-    const iso = normalizePartnerIso(code)
-    if (!iso) {
+    const iso = String(code ?? '').trim().toUpperCase()
+    if (!iso || iso === 'NULL' || iso === 'UNDEFINED') {
       process.stderr.write(`  ⚠ manual ${networkKey}: skipped invalid ISO "${code}"\n`)
+      continue
+    }
+    if (LEGACY_RAW_ISO.has(iso)) {
+      process.stderr.write(
+        `  ⚠ manual ${networkKey}: use reporting ISO (CN not HK, EU not EN) for "${code}" — see sql/_partner_country_iso.sql\n`,
+      )
+      continue
+    }
+    if (EXCLUDED_REPORTING_ISO.has(iso)) {
+      process.stderr.write(`  ⚠ manual ${networkKey}: excluded ISO "${code}"\n`)
       continue
     }
 

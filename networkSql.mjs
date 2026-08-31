@@ -13,6 +13,34 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export const NETWORK_SQL_DIR = path.join(__dirname, 'sql')
+const PARTNER_COUNTRY_ISO_SQL_PATH = path.join(NETWORK_SQL_DIR, '_partner_country_iso.sql')
+
+/** @type {string | null} */
+let partnerCountryIsoTemplate = null
+
+function loadPartnerCountryIsoTemplate() {
+  if (!partnerCountryIsoTemplate) {
+    const raw = fs.readFileSync(PARTNER_COUNTRY_ISO_SQL_PATH, 'utf8')
+    partnerCountryIsoTemplate = raw
+      .split('\n')
+      .filter((line) => !line.trimStart().startsWith('--'))
+      .join('\n')
+      .trim()
+  }
+  return partnerCountryIsoTemplate
+}
+
+/** @param {string} columnExpr */
+export function renderPartnerCountryIsoExpr(columnExpr) {
+  return loadPartnerCountryIsoTemplate().replaceAll('{{EXPR}}', columnExpr)
+}
+
+/** @param {string} sql */
+export function renderPartnerCountryIsoTokens(sql) {
+  return sql.replace(/\{\{PARTNER_COUNTRY_ISO:([^}]+)\}\}/g, (_, columnExpr) =>
+    renderPartnerCountryIsoExpr(columnExpr.trim()),
+  )
+}
 
 /** Partner export key → sql/{layerId}.sql */
 export const PARTNER_KEY_TO_LAYER_ID = {
@@ -93,9 +121,13 @@ export function renderNetworkSqlSection(filePath, section) {
 
   if (section === 'geojson' || section === 'partner') {
     if (body.includes('{{WHERE}}')) {
-      const whereRendered = renderEditionSql(parts.where)
+      const whereRendered = renderEditionSql(renderPartnerCountryIsoTokens(parts.where))
       body = body.replaceAll('{{WHERE}}', whereRendered)
     }
+  }
+
+  if (section === 'geojson' || section === 'partner') {
+    body = renderPartnerCountryIsoTokens(body)
   }
 
   return renderEditionSql(body)
@@ -117,7 +149,7 @@ export function compactSqlHint(sql) {
 export function readRenderedNetworkWhere(layerId) {
   const raw = fs.readFileSync(networkSqlPath(layerId), 'utf8')
   const parts = parseNetworkSqlSections(raw)
-  return renderEditionSql(parts.where)
+  return renderEditionSql(renderPartnerCountryIsoTokens(parts.where))
 }
 
 /**
@@ -200,7 +232,7 @@ export function readPartnerNetworkSql(partnerNetworkKey) {
 export function renderNetworkSqlFileForPgAdmin(filePath) {
   const raw = fs.readFileSync(filePath, 'utf8')
   const parts = parseNetworkSqlSections(raw)
-  const whereRendered = renderEditionSql(parts.where)
+  const whereRendered = renderEditionSql(renderPartnerCountryIsoTokens(parts.where))
 
   let geojson = parts.geojson.replaceAll('{{WHERE}}', whereRendered)
   let partner = parts.partner
@@ -208,7 +240,9 @@ export function renderNetworkSqlFileForPgAdmin(filePath) {
     partner = partner.replaceAll('{{WHERE}}', whereRendered)
   }
 
+  geojson = renderPartnerCountryIsoTokens(geojson)
   geojson = renderEditionSql(geojson)
+  partner = renderPartnerCountryIsoTokens(partner)
   partner = renderEditionSql(partner)
 
   return `${parts.header}

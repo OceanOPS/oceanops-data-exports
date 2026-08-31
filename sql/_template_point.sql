@@ -19,6 +19,7 @@ AND t.country IS NOT NULL
 AND TRIM(t.country) <> ''
 AND t.country_iso_code2 IS NOT NULL
 AND TRIM(t.country_iso_code2) <> ''
+AND {{PARTNER_COUNTRY_ISO:t.country_iso_code2}} IS NOT NULL
 
 -- @geojson
 SELECT jsonb_build_object(
@@ -33,6 +34,7 @@ SELECT jsonb_build_object(
         'ptf_ref', t.ptf_ref,
         'ptf_model', t.ptf_model,
         'country_name', t.country,
+        'country_iso_reporting', {{PARTNER_COUNTRY_ISO:t.country_iso_code2}},
         'country_ship', rv.ship_country,
         'country_sensor_provider', sp.sensor_country
       )
@@ -54,8 +56,10 @@ WHERE {{WHERE}};
 
 -- @partner
 -- Same {{WHERE}} as @geojson (do not add extra country filters here).
-SELECT t.country_iso_code2, COUNT(*)::int
+-- Reporting ISO: sql/_partner_country_iso.sql (HK→CN, EN→EU, exclude AQ/UN/…)
+SELECT {{PARTNER_COUNTRY_ISO:t.country_iso_code2}} AS country_iso_code2, COUNT(*)::int
 FROM oceanops_gis.ptf_loc_n AS t
 WHERE ({{WHERE}})
-GROUP BY t.country_iso_code2
-ORDER BY t.country_iso_code2;
+GROUP BY 1
+HAVING {{PARTNER_COUNTRY_ISO:t.country_iso_code2}} IS NOT NULL
+ORDER BY 1;

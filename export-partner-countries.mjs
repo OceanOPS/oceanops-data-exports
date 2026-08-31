@@ -20,7 +20,6 @@ import { assertPsqlAvailable } from './geojson-export/db.mjs'
 loadDotEnv()
 import { LINE_NETWORK_KEYS, NETWORK_KEYS } from './partner-export/networkFilters.mjs'
 import { isManualPartnerNetwork, manualPartnerCountsHint } from './partner-export/manualPartnerCounts.mjs'
-import { rollupPartnerCountries, normalizePartnerIso } from './partner-export/countryRollup.mjs'
 import { fetchPartnerCountsByCountryOrThrow } from './partner-export/runPartnerSql.mjs'
 import {
   EXPORT_EDITION_LABEL,
@@ -49,8 +48,8 @@ function mergeCountryCounts(byNetwork) {
   for (const networkKey of NETWORK_KEYS) {
     const byCountry = byNetwork[networkKey] ?? {}
     for (const [code, count] of Object.entries(byCountry)) {
-      const iso = normalizePartnerIso(code)
-      if (!iso) continue
+      const iso = String(code ?? '').trim().toUpperCase()
+      if (!iso || iso === 'NULL' || iso === 'UNDEFINED') continue
       if (!countries.has(iso)) {
         countries.set(iso, Object.fromEntries(NETWORK_KEYS.map((k) => [k, 0])))
       }
@@ -257,19 +256,16 @@ export async function runPartnerExport(argv = process.argv.slice(2), options = {
   process.stderr.write(`Exporting partner counts from PostgreSQL (${formatDatabaseUrlForLog()})…\n`)
   const byNetwork = exportCountsFromDatabase()
   let countries = mergeCountryCounts(byNetwork)
-  countries = rollupPartnerCountries(countries, NETWORK_KEYS)
 
-  for (const [code, info] of Object.entries(COUNTRY_META_OVERRIDES)) {
-    if (normalizePartnerIso(code) && !countries.has(code)) {
+  for (const [code] of Object.entries(COUNTRY_META_OVERRIDES)) {
+    if (!countries.has(code)) {
       countries.set(code, Object.fromEntries(NETWORK_KEYS.map((k) => [k, 0])))
     }
   }
 
   const meta = readExistingMetadata(OUTPUT)
   for (const [code, info] of Object.entries(COUNTRY_META_OVERRIDES)) {
-    if (normalizePartnerIso(code)) {
-      meta[code] = { ...meta[code], ...info }
-    }
+    meta[code] = { ...meta[code], ...info }
   }
   for (const dropped of ['HK', 'EN', 'AQ', 'UN', 'U-']) {
     delete meta[dropped]

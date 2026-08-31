@@ -64,7 +64,7 @@ Configure edition **values** in **`edition.values.json`** (dates, line lists).
 Configure **filters and queries** in **`sql/*.sql`** (`-- @where`, `-- @geojson`, `-- @partner` + `{{tokens}}`).  
 **Ocean TraX partner counts** are manual: edit **`partner-export/manual/oceantrax.json`** each edition (`"AU": 2`, …).
 
-- `partner-export/countryMeta.mjs` — EU and other editorial country metadata
+- `partner-export/countryMeta.mjs` — EU and other editorial country metadata (display names only; ISO rollup is in `sql/_partner_country_iso.sql`)
 - `geoCountryNames.mjs` — ISO ↔ GeoJSON `country_name` for the map
 
 ### Environment (shared)
