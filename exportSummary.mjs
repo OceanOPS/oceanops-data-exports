@@ -9,6 +9,7 @@ import {
   NETWORK_CRITERIA,
 } from './partner-export/exportConfig.mjs'
 import { NETWORK_KEYS } from './partner-export/networkFilters.mjs'
+import { isManualPartnerNetwork, manualPartnerCountsHint } from './partner-export/manualPartnerCounts.mjs'
 import { formatGeojsonSqlHint, formatNetworkSqlHint, GEOJSON_SQL_SOURCE } from './networkSql.mjs'
 import {
   writeLineStyleSummaryLines,
@@ -45,7 +46,12 @@ export function printCombinedExportSummary(byNetwork, countsByLayer, lineStyleBy
     const geojsonFeatures = countsByLayer[layerId] ?? 0
 
     process.stderr.write(`${partnerKey} · ${layerId}\n`)
-    process.stderr.write(`  Partner total: ${partnerTotal}  |  GeoJSON features: ${geojsonFeatures}\n`)
+    if (isManualPartnerNetwork(partnerKey)) {
+      process.stderr.write(`  Partner total: ${partnerTotal}  |  GeoJSON lines: ${geojsonFeatures} (manual counts — not 1:1)\n`)
+      process.stderr.write(`  Partner source: ${manualPartnerCountsHint(partnerKey)}\n`)
+    } else {
+      process.stderr.write(`  Partner total: ${partnerTotal}  |  GeoJSON features: ${geojsonFeatures}\n`)
+    }
     process.stderr.write(`  ${renderEditionSummary(summary)}\n`)
 
     const lineStyle = lineStyleByLayer[layerId]

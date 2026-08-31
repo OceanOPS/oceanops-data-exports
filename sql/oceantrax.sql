@@ -1,8 +1,8 @@
 -- Layer: oceantrax
 -- Ocean TraX (SOOP) design lines — soop_xbt_design_2023_2024
 -- Map: line_status active = solid, reactivate = dashed (both orange on map)
--- Partner counts: cruises since SOOP_XBT_SAMPLED_SINCE via cruise_program lead → program.country
--- Country attribution: cruise_program (lead = 1) → program.country_id (not cruise_country)
+-- Partner counts: manual file partner-export/manual/oceantrax.json (not from PostgreSQL)
+-- Country attribution on map: cruise_program (lead = 1) → program.country_id (not cruise_country)
 -- Ship name/country omitted when ship.hide_metadata = 1 (same rule as v_ptf_depl_rv on point layers).
 -- Edit filter under @where; edition.values.json for date tokens.
 
@@ -189,30 +189,6 @@ LEFT JOIN line_edition_countries lec ON lec.line_id = d.line_id
 LEFT JOIN edition_cruises ec ON ec.line_id = d.line_id;
 
 -- @partner
--- Per-country lines with edition cruises: cruise_line → cruise → cruise_program (lead) → program.country
-SET search_path TO oceanops, oceanops_gis, public;
-WITH selected_lines AS (
-  SELECT DISTINCT g.line_id
-  FROM soop_xbt_design_2023_2024 AS g
-  WHERE ({{WHERE}})
-    AND g.line_id IS NOT NULL
-),
-cruise_lead_country AS (
-  SELECT
-    cp.cruise_id,
-    co.code2 AS country_code2
-  FROM cruise_program cp
-  JOIN program pr ON pr.id = cp.program_id
-  JOIN country co ON co.id = pr.country_id
-  WHERE cp.lead = 1
-    AND co.code2 IS NOT NULL
-    AND TRIM(co.code2) <> ''
-)
-SELECT clc.country_code2 AS code2, COUNT(DISTINCT sl.line_id)::int AS line_count
-FROM selected_lines sl
-JOIN cruise_line cl ON cl.line_id = sl.line_id
-JOIN cruise cr ON cr.id = cl.cruise_id
-  AND cr.departure_date >= DATE '{{SOOP_XBT_SAMPLED_SINCE}}'
-JOIN cruise_lead_country clc ON clc.cruise_id = cr.id
-GROUP BY clc.country_code2
-ORDER BY clc.country_code2;
+-- Manual only — not executed. Edit partner-export/manual/oceantrax.json before export:partners.
+-- Format: ISO 3166-1 alpha-2 → integer count, e.g. { "AU": 2, "US": 5 }
+-- See partner-export/manual/README.md

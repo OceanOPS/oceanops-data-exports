@@ -9,7 +9,9 @@ Each `*.sql` file holds the edition filter **once** and two runnable queries:
 |---------|---------|
 | `-- @where` | Filter fragment (no `WHERE` keyword); injected as `{{WHERE}}` in geojson/partner |
 | `-- @geojson` | Map export (`npm run export:geojson`) |
-| `-- @partner` | Country counts (`npm run export:partners`) |
+| `-- @partner` | Country counts (`npm run export:partners`) — or **manual JSON** for Ocean TraX |
+
+**Ocean TraX:** partner counts come from `partner-export/manual/oceantrax.json` (ISO → integer), not `@partner` SQL. Map lines still use `@geojson` in `sql/oceantrax.sql`.
 
 ## Before each edition
 

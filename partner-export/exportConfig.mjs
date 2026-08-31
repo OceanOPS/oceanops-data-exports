@@ -7,6 +7,7 @@
 import { loadEditionValues, renderEditionSummary } from '../editionValues.mjs'
 import { formatNetworkSqlHint, PARTNER_KEY_TO_LAYER_ID } from '../networkSql.mjs'
 import { NETWORK_KEYS } from './networkFilters.mjs'
+import { isManualPartnerNetwork, manualPartnerCountsHint } from './manualPartnerCounts.mjs'
 
 export const EXPORT_EDITION_LABEL =
   process.env.PARTNER_EXPORT_EDITION
@@ -25,7 +26,7 @@ export const NETWORK_CRITERIA = {
   fvon: { summary: 'FVON — layer-table statuses + latest_loc_date cutoff', layerId: 'fvon', sqlSource: 'ptf_loc_n' },
   sotVos: { summary: 'OPERATIONAL SOT/VOS ships', layerId: 'vos', sqlSource: 'ptf_loc_n' },
   sotAsap: { summary: 'OPERATIONAL ASAP ships', layerId: 'asap', sqlSource: 'ptf_loc_n' },
-  sot: { summary: 'Ocean TraX — line_status active/reactivate; partner counts = cruises since SOOP_XBT_SAMPLED_SINCE via cruise_program lead → program.country', layerId: 'oceantrax', sqlSource: 'cruise_program' },
+  sot: { summary: 'Ocean TraX — partner counts from partner-export/manual/oceantrax.json (manual ISO → count; map lines from sql/oceantrax.sql @geojson)', layerId: 'oceantrax', sqlSource: 'manual' },
   goShip: { summary: 'GO-SHIP — line_type <> Associated, name <> P03; partner counts = edition cruises (lead program country) since GOSHIP_EDITION_SINCE', layerId: 'goship', sqlSource: 'cruise_program' },
   gloss: { summary: 'OPERATIONAL GLOSS sea-level gauges', layerId: 'gloss', sqlSource: 'ptf_loc_n' },
   oceanSites: { summary: 'OceanSITES moorings — OPERATIONAL or INACTIVE', layerId: 'oceansites', sqlSource: 'ptf_loc_n' },
@@ -53,7 +54,11 @@ export function printExportCriteriaSummary(byNetwork, config = {}) {
     const total = Object.values(byNetwork[key] ?? {}).reduce((a, b) => a + b, 0)
     process.stderr.write(`${key} (${total})\n`)
     process.stderr.write(`  ${renderEditionSummary(criteria.summary)}\n`)
-    process.stderr.write(`  SQL hint: ${formatNetworkSqlHint(criteria.layerId, criteria.sqlSource)}\n`)
+    if (isManualPartnerNetwork(key)) {
+      process.stderr.write(`  Source: ${manualPartnerCountsHint(key)}\n`)
+    } else {
+      process.stderr.write(`  SQL hint: ${formatNetworkSqlHint(criteria.layerId, criteria.sqlSource)}\n`)
+    }
     process.stderr.write(`  SQL: sql/${criteria.layerId}.sql\n`)
   }
 

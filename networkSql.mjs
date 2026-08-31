@@ -6,6 +6,10 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { renderEditionSql } from './editionValues.mjs'
+import {
+  isManualPartnerNetwork,
+  manualPartnerCountsHint,
+} from './partner-export/manualPartnerCounts.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export const NETWORK_SQL_DIR = path.join(__dirname, 'sql')
@@ -122,6 +126,11 @@ export function readRenderedNetworkWhere(layerId) {
  * @param {string} [sqlSource]
  */
 export function formatNetworkSqlHint(layerId, sqlSource = 'ptf_loc_n') {
+  const partnerKey = LAYER_ID_TO_PARTNER_KEY[layerId]
+  if (partnerKey && isManualPartnerNetwork(partnerKey)) {
+    return manualPartnerCountsHint(partnerKey)
+  }
+
   const raw = fs.readFileSync(networkSqlPath(layerId), 'utf8')
   const parts = parseNetworkSqlSections(raw)
 

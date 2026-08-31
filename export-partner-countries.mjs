@@ -19,6 +19,7 @@ import { assertPsqlAvailable } from './geojson-export/db.mjs'
 
 loadDotEnv()
 import { LINE_NETWORK_KEYS, NETWORK_KEYS } from './partner-export/networkFilters.mjs'
+import { isManualPartnerNetwork, manualPartnerCountsHint } from './partner-export/manualPartnerCounts.mjs'
 import { rollupPartnerCountries, normalizePartnerIso } from './partner-export/countryRollup.mjs'
 import { fetchPartnerCountsByCountryOrThrow } from './partner-export/runPartnerSql.mjs'
 import {
@@ -68,7 +69,9 @@ function exportCountsFromDatabase() {
     process.stderr.write(`  ${networkKey}… `)
     byNetwork[networkKey] = fetchPartnerCountsByCountryOrThrow(networkKey)
     const total = Object.values(byNetwork[networkKey]).reduce((a, b) => a + b, 0)
-    if (total === 0 && LINE_NETWORK_KEYS.includes(networkKey)) {
+    if (isManualPartnerNetwork(networkKey)) {
+      process.stderr.write(`${total} (manual ${manualPartnerCountsHint(networkKey)})\n`)
+    } else if (total === 0 && LINE_NETWORK_KEYS.includes(networkKey)) {
       process.stderr.write(
         `0 (no partner rows for selected design lines on this DB — check cruise_line/cruise_program)\n`,
       )
