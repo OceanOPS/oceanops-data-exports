@@ -49,7 +49,7 @@ const arg = process.argv[2]
 if (!arg) {
   process.stderr.write(`Usage:
   npm run render:sql -- sql/argo.sql
-  npm run render:sql -- all          # full file (@where + @geojson + @partner)
+  npm run render:sql -- all          # @geojson + @partner (@where inlined)
   npm run render:sql -- geojson      # map queries only
   npm run render:sql -- partners     # partner count queries only
 `)

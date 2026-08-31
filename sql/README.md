@@ -22,7 +22,7 @@ Each `*.sql` file holds the edition filter **once** and two runnable queries:
 3. Render for pgAdmin:
 
    ```bash
-   npm run render:sql -- sql/argo.sql   # full file, tokens applied
+   npm run render:sql -- sql/argo.sql   # @geojson + @partner (filters inlined)
    npm run render:sql -- geojson        # all map queries
    npm run render:sql -- partners       # all partner queries
    npm run render:sql -- all

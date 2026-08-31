@@ -226,7 +226,7 @@ export function readPartnerNetworkSql(partnerNetworkKey) {
 }
 
 /**
- * Full file for pgAdmin (both queries, comments).
+ * Full file for pgAdmin (@geojson + @partner; @where inlined via {{WHERE}}).
  * @param {string} filePath
  */
 export function renderNetworkSqlFileForPgAdmin(filePath) {
@@ -246,9 +246,6 @@ export function renderNetworkSqlFileForPgAdmin(filePath) {
   partner = renderEditionSql(partner)
 
   return `${parts.header}
-
--- @where (edition filter — edit here)
-${whereRendered}
 
 -- @geojson
 ${geojson}
