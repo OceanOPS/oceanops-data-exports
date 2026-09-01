@@ -6,7 +6,7 @@
 -- pgAdmin: npm run render:sql -- sql/moored_buoys.sql
 
 -- @where
-upper(t.network) LIKE '%MOORED BUOY NETWORK%' AND t.ptf_status = 6
+upper(t.network) LIKE '%MOORED BUOY NETWORK%' AND t.ptf_status = {{PTF_STATUS_OPERATIONAL}}
 AND t.country IS NOT NULL
 AND TRIM(t.country) <> ''
 AND t.country_iso_code2 IS NOT NULL

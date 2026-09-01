@@ -13,11 +13,13 @@ Each `*.sql` file holds the edition filter **once** and two runnable queries:
 
 **Partner reporting ISO:** rollup/exclude rules in `sql/_partner_country_iso.sql`, referenced as `{{PARTNER_COUNTRY_ISO:column}}` in `@where`, `@geojson` (`country_iso_reporting`), and `@partner`.
 
+**Platform status:** `{{PTF_STATUS_OPERATIONAL}}` (= `6`) for operational-only layers; `{{LAYER_TABLE_PTF_STATUS_IN}}` (= `2,4,5,6`) for the recency-filtered layers (`anibos`, `fvon`, `oceangliders`). Codes: `partner-export/ptfStatus.mjs`. OceanSITES keeps a literal `IN (4, 6)`.
+
 **Ocean TraX:** partner counts come from `partner-export/manual/oceantrax.json` (reporting ISO → integer), not `@partner` SQL. Map lines still use `@geojson` in `sql/oceantrax.sql`.
 
 ## Before each edition
 
-1. **`edition.values.json`** — dates, line lists, shared `ptf_status IN (...)` tokens.
+1. **`edition.values.json`** — dates, line lists, shared `ptf_status` tokens.
 2. **`sql/<layerId>.sql`** — edit `-- @where` (and query shape if needed).
 3. Render for pgAdmin:
 

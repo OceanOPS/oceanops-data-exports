@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export const EDITION_VALUES_PATH = path.join(__dirname, 'edition.values.json')
 
-/** @typedef {{ LAYER_TABLE_PTF_STATUS_IN: string, OBS_PERIOD_SINCE: string, OBS_PERIOD_UNTIL?: string, OCEAN_GLIDERS_MIN_LOC_DATE: string, ANIBOS_MIN_LOC_DATE: string, FVON_MIN_LOC_DATE: string, SOOP_XBT_SAMPLED_SINCE: string, GOSHIP_EDITION_SINCE: string, GOSHIP_RECENT_SINCE: string, GOSHIP_DECADAL_SINCE: string, GOSHIP_DECADAL_UNTIL: string }} EditionValues */
+/** @typedef {{ PTF_STATUS_OPERATIONAL: string, LAYER_TABLE_PTF_STATUS_IN: string, OBS_PERIOD_SINCE: string, OBS_PERIOD_UNTIL?: string, OCEAN_GLIDERS_MIN_LOC_DATE: string, ANIBOS_MIN_LOC_DATE: string, FVON_MIN_LOC_DATE: string, SOOP_XBT_SAMPLED_SINCE: string, GOSHIP_EDITION_SINCE: string, GOSHIP_RECENT_SINCE: string, GOSHIP_DECADAL_SINCE: string, GOSHIP_DECADAL_UNTIL: string }} EditionValues */
 
 /** @type {EditionValues | null} */
 let cache = null
@@ -64,6 +64,7 @@ export function editionValueTokens() {
   const { since: obsSince, until: obsUntil } = resolveObsPeriodBounds()
 
   return {
+    PTF_STATUS_OPERATIONAL: v.PTF_STATUS_OPERATIONAL,
     LAYER_TABLE_PTF_STATUS_IN: v.LAYER_TABLE_PTF_STATUS_IN,
     OBS_PERIOD_SINCE: obsSince,
     OBS_PERIOD_UNTIL: obsUntil,

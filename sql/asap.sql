@@ -6,7 +6,7 @@
 -- pgAdmin: npm run render:sql -- sql/asap.sql
 
 -- @where
-t.ptf_status = 6 AND t.network LIKE '%ASAP%'
+t.ptf_status = {{PTF_STATUS_OPERATIONAL}} AND t.network LIKE '%ASAP%'
 AND t.country IS NOT NULL
 AND TRIM(t.country) <> ''
 AND t.country_iso_code2 IS NOT NULL

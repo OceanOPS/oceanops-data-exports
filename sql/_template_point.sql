@@ -2,7 +2,7 @@
 --
 -- 1. Copy to `<layerId>.sql` (e.g. fvon.sql)
 -- 2. Set `category` in @geojson properties (must match map categories)
--- 3. Edit -- @where before each edition; use {{LAYER_TABLE_PTF_STATUS_IN}} etc. from edition.values.json
+-- 3. Edit -- @where before each edition; use {{PTF_STATUS_OPERATIONAL}} / {{LAYER_TABLE_PTF_STATUS_IN}} etc. from edition.values.json
 -- 4. Register in `geojson-export/layers.manifest.json`
 -- 5. pgAdmin: npm run render:sql -- sql/<layerId>.sql
 --
@@ -14,7 +14,7 @@
 -- (ptf_loc_n.shape is always set by update_latest_loc when lat/lon exist.)
 
 -- @where
-upper(t.network) LIKE '%ARGO%' AND t.ptf_status = 6
+upper(t.network) LIKE '%ARGO%' AND t.ptf_status = {{PTF_STATUS_OPERATIONAL}}
 AND t.country IS NOT NULL
 AND TRIM(t.country) <> ''
 AND t.country_iso_code2 IS NOT NULL

@@ -6,7 +6,7 @@
 -- pgAdmin: npm run render:sql -- sql/tsunami_buoys.sql
 
 -- @where
-t.ptf_status = 6 AND t.ptf_type = 'TSUNAMETER'
+t.ptf_status = {{PTF_STATUS_OPERATIONAL}} AND t.ptf_type = 'TSUNAMETER'
 AND t.country IS NOT NULL
 AND TRIM(t.country) <> ''
 AND t.country_iso_code2 IS NOT NULL

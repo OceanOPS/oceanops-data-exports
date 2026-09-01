@@ -6,7 +6,7 @@
 -- pgAdmin: npm run render:sql -- sql/drifting_buoys.sql
 
 -- @where
-t.ptf_status = 6 AND t.ptf_family = 'DB'
+t.ptf_status = {{PTF_STATUS_OPERATIONAL}} AND t.ptf_family = 'DB'
 AND t.country IS NOT NULL
 AND TRIM(t.country) <> ''
 AND t.country_iso_code2 IS NOT NULL
