@@ -162,6 +162,7 @@ interface CountryNetworks {
   fvon: number
   sotVos: number
   sotAsap: number
+  soconet: number
   oceantrax: number
   goShip: number // -1 represents "X" (participates but not counted)
   gloss: number

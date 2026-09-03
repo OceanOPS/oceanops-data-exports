@@ -24,6 +24,13 @@
       "summary": "OPERATIONAL ASAP ships",
       "densify": false
     },
+    "soconet": {
+      "geometryKind": "point",
+      "category": "soconet",
+      "sourceTable": "oceanops_gis.ptf_loc_0",
+      "summary": "SOCONET UND ships — one point per ship (earliest deployment, ptf_status >= REGISTERED)",
+      "densify": false
+    },
     "gloss": {
       "geometryKind": "point",
       "category": "gloss",

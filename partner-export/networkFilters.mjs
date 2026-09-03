@@ -10,6 +10,7 @@ export const NETWORK_KEYS = [
   'fvon',
   'sotVos',
   'sotAsap',
+  'soconet',
   'oceantrax',
   'goShip',
   'gloss',

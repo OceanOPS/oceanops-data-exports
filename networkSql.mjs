@@ -51,6 +51,7 @@ export const PARTNER_KEY_TO_LAYER_ID = {
   fvon: 'fvon',
   sotVos: 'vos',
   sotAsap: 'asap',
+  soconet: 'soconet',
   gloss: 'gloss',
   oceanSites: 'oceansites',
   mooredBuoys: 'moored_buoys',
@@ -69,6 +70,7 @@ export const LAYER_ID_TO_PARTNER_KEY = Object.fromEntries(
 export const GEOJSON_SQL_SOURCE = {
   goship: 'goship_design_goship_1',
   oceantrax: 'soop_xbt_design_2023_2024',
+  soconet: 'ptf_loc_0',
 }
 
 /** @param {string} content */
