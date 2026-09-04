@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url'
 import { formatDatabaseUrlForLog, runPsqlQuery } from './geojson-export/db.mjs'
 import { loadDotEnv } from './databaseUrl.mjs'
 import { buildExportMetadata, patchExportMetadata } from './editionMetadata.mjs'
-import { resolveObsPeriodBounds, setExportAsOfDate } from './editionValues.mjs'
+import { resolveObsPeriodBounds, setExportAsOfDate, resolveExportAsOfDate } from './editionValues.mjs'
 import { resolveExportPaths } from './paths.mjs'
 import {
   OBS_FILTER_LABELS,
@@ -274,7 +274,7 @@ export async function runObservationsExport(argv = [], opts = {}) {
   const skipNetworkYoy = argv.includes('--skip-network-yoy')
   const obsFilter = resolveObsFilter(argv)
   const year = resolveObsYear(argv)
-  const exportedAt = new Date().toISOString().slice(0, 10)
+  const exportedAt = resolveExportAsOfDate()
   setExportAsOfDate(exportedAt)
   const { since: periodSince, until: periodUntil } = resolveObsPeriodBounds()
   const range = year ? { year } : { periodSince, periodUntil }

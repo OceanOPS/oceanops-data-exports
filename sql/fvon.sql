@@ -1,12 +1,12 @@
 -- Layer: fvon
--- FVON — layer-table statuses, latest_loc_date >= 2025-01-01
+-- FVON — layer-table statuses, latest_loc_date in last 12 months (ROLLING_12M_SINCE)
 -- Edit WHERE (or line IN list) here, test in pgAdmin, then: npm run export:geojson
 --   psql "$OCEANOPS_DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/fvon.sql
 -- Edit filter under @where; edition.values.json for dates / line lists.
 -- pgAdmin: npm run render:sql -- sql/fvon.sql
 
 -- @where
-t.network ILIKE '%FVON%' AND t.ptf_status IN ({{LAYER_TABLE_PTF_STATUS_IN}}) AND t.latest_loc_date >= DATE '{{FVON_MIN_LOC_DATE}}'
+t.network ILIKE '%FVON%' AND t.ptf_status IN ({{LAYER_TABLE_PTF_STATUS_IN}}) AND t.latest_loc_date >= DATE '{{ROLLING_12M_SINCE}}'
 AND t.country IS NOT NULL
 AND TRIM(t.country) <> ''
 AND t.country_iso_code2 IS NOT NULL

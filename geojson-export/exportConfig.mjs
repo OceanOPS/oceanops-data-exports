@@ -6,7 +6,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { NETWORK_KEYS } from '../partner-export/networkFilters.mjs'
-import { renderEditionSummary, loadEditionValues } from '../editionValues.mjs'
+import { renderEditionSummary, loadEditionValues, editionValueTokens } from '../editionValues.mjs'
 import {
   writeLineStyleSummaryLines,
   yearFromIsoDate,
@@ -112,7 +112,7 @@ export function printExportSummary(countsByLayer, lineStyleByLayer = {}, layerId
     if (lineStyle) {
       const sinceYear =
         layerId === 'goship'
-          ? yearFromIsoDate(values.GOSHIP_EDITION_SINCE)
+          ? 'last 12 months'
           : yearFromIsoDate(values.SOOP_XBT_SAMPLED_SINCE)
       writeLineStyleSummaryLines(
         process.stderr,

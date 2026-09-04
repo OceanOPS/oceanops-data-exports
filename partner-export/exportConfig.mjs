@@ -4,7 +4,7 @@
  * SQL: sql/{layerId}.sql — @partner section (filter in @where).
  */
 
-import { loadEditionValues, renderEditionSummary } from '../editionValues.mjs'
+import { loadEditionValues, renderEditionSummary, editionValueTokens, resolveExportAsOfDate } from '../editionValues.mjs'
 import { formatNetworkSqlHint, PARTNER_KEY_TO_LAYER_ID } from '../networkSql.mjs'
 import { NETWORK_KEYS } from './networkFilters.mjs'
 import { isManualPartnerNetwork, manualPartnerCountsHint } from './manualPartnerCounts.mjs'
@@ -21,14 +21,14 @@ export const EXPORT_EDITION_LABEL =
 export const NETWORK_CRITERIA = {
   driftingBuoys: { summary: 'OPERATIONAL drifting buoys (ptf_family DB)', layerId: 'drifting_buoys', sqlSource: 'ptf_loc_n' },
   argo: { summary: 'OPERATIONAL Argo floats', layerId: 'argo', sqlSource: 'ptf_loc_n' },
-  oceanGliders: { summary: 'OceanGliders — layer-table statuses + latest_loc_date cutoff', layerId: 'oceangliders', sqlSource: 'ptf_loc_n' },
-  aniBOS: { summary: 'AniBOS — layer-table statuses + latest_loc_date cutoff', layerId: 'anibos', sqlSource: 'ptf_loc_n' },
-  fvon: { summary: 'FVON — layer-table statuses + latest_loc_date cutoff', layerId: 'fvon', sqlSource: 'ptf_loc_n' },
+  oceanGliders: { summary: 'OceanGliders — layer-table statuses + latest_loc_date in last 12 months', layerId: 'oceangliders', sqlSource: 'ptf_loc_n' },
+  aniBOS: { summary: 'AniBOS — layer-table statuses + latest_loc_date in last 12 months', layerId: 'anibos', sqlSource: 'ptf_loc_n' },
+  fvon: { summary: 'FVON — layer-table statuses + latest_loc_date in last 12 months', layerId: 'fvon', sqlSource: 'ptf_loc_n' },
   sotVos: { summary: 'OPERATIONAL SOT/VOS ships', layerId: 'vos', sqlSource: 'ptf_loc_n' },
   sotAsap: { summary: 'OPERATIONAL ASAP ships', layerId: 'asap', sqlSource: 'ptf_loc_n' },
   soconet: { summary: 'SOCONET UND ships — one point per ship (earliest deployment, ptf_status >= REGISTERED)', layerId: 'soconet', sqlSource: 'ptf_loc_0' },
   oceantrax: { summary: 'Ocean TraX — partner counts from partner-export/manual/oceantrax.json (manual ISO → count; map lines from sql/oceantrax.sql @geojson)', layerId: 'oceantrax', sqlSource: 'manual' },
-  goShip: { summary: 'GO-SHIP — line_type <> Associated, name <> P03; partner counts = edition cruises (lead program country) since GOSHIP_EDITION_SINCE', layerId: 'goship', sqlSource: 'cruise_program' },
+  goShip: { summary: 'GO-SHIP — line_type <> Associated, name <> P03; partner counts = edition cruises (lead program country) in last 12 months', layerId: 'goship', sqlSource: 'cruise_program' },
   gloss: { summary: 'OPERATIONAL GLOSS sea-level gauges', layerId: 'gloss', sqlSource: 'ptf_loc_n' },
   oceanSites: { summary: 'OceanSITES moorings — OPERATIONAL or INACTIVE', layerId: 'oceansites', sqlSource: 'ptf_loc_n' },
   mooredBuoys: { summary: 'OPERATIONAL moored buoys (excl. OceanSITES)', layerId: 'moored_buoys', sqlSource: 'ptf_loc_n' },
@@ -64,12 +64,11 @@ export function printExportCriteriaSummary(byNetwork, config = {}) {
   }
 
   process.stderr.write('\nShared edition values\n')
+  process.stderr.write(`  EXPORT_AS_OF: ${resolveExportAsOfDate()}\n`)
   process.stderr.write(`  LAYER_TABLE_PTF_STATUS_IN: ${values.LAYER_TABLE_PTF_STATUS_IN}\n`)
-  process.stderr.write(`  OCEAN_GLIDERS_MIN_LOC_DATE: ${values.OCEAN_GLIDERS_MIN_LOC_DATE}\n`)
-  process.stderr.write(`  ANIBOS_MIN_LOC_DATE: ${values.ANIBOS_MIN_LOC_DATE}\n`)
-  process.stderr.write(`  FVON_MIN_LOC_DATE: ${values.FVON_MIN_LOC_DATE}\n`)
+  const tokens = editionValueTokens()
+  process.stderr.write(`  ROLLING_12M_SINCE: ${tokens.ROLLING_12M_SINCE}\n`)
   process.stderr.write(`  SOOP_XBT_SAMPLED_SINCE: ${values.SOOP_XBT_SAMPLED_SINCE}\n`)
-  process.stderr.write(`  GOSHIP_EDITION_SINCE: ${values.GOSHIP_EDITION_SINCE}\n`)
   process.stderr.write(`  GOSHIP_RECENT_SINCE: ${values.GOSHIP_RECENT_SINCE}\n`)
   process.stderr.write(`  GOSHIP_DECADAL_SINCE: ${values.GOSHIP_DECADAL_SINCE}\n`)
   process.stderr.write(`  GOSHIP_DECADAL_UNTIL: ${values.GOSHIP_DECADAL_UNTIL}\n\n`)

@@ -18,7 +18,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { formatDatabaseUrlForLog, loadDotEnv } from './databaseUrl.mjs'
 import { buildExportMetadata, patchExportMetadata } from './editionMetadata.mjs'
-import { setExportAsOfDate } from './editionValues.mjs'
+import { setExportAsOfDate, resolveExportAsOfDate } from './editionValues.mjs'
 import { assertPsqlAvailable, runPsqlQuery } from './geojson-export/db.mjs'
 
 loadDotEnv()
@@ -167,10 +167,11 @@ export async function runGeojsonExport(argv = process.argv.slice(2), options = {
     throw new Error('No layers selected for export')
   }
 
-  const exportedAt = new Date().toISOString().slice(0, 10)
+  const exportedAt = resolveExportAsOfDate()
   setExportAsOfDate(exportedAt)
 
   process.stderr.write(`GeoJSON export (${EXPORT_EDITION_LABEL})\n`)
+  process.stderr.write(`Export as-of: ${exportedAt}\n`)
   process.stderr.write(`Database: ${formatDatabaseUrlForLog()}\n`)
   process.stderr.write(`Layers: ${layerIds.map((id) => LAYER_ID_TO_PARTNER_KEY[id] ?? id).join(', ')}\n`)
   if (dryRun) process.stderr.write('Mode: dry-run (SQL only, no files written)\n')

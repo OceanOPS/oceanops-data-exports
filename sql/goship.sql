@@ -1,7 +1,7 @@
 -- Layer: goship
 -- GO-SHIP design lines — 53 core lines (line_type <> 'Associated', name <> 'P03', shape not null)
 -- Do not COALESCE line_type: NULL line_type must be excluded (matches GIS / colleague query).
--- Map: all design lines; solid = cruise in [GOSHIP_EDITION_SINCE, export date]; dash = all others
+-- Map: all design lines; solid = cruise in last 12 months [ROLLING_12M_SINCE, export date]; dash = all others
 -- Country attribution: cruise_program (lead = 1) → program.country_id (not cruise_country)
 -- Ship name/country omitted when ship.hide_metadata = 1 (same rule as v_ptf_depl_rv on point layers).
 -- Edit filter under @where; edition.values.json for date tokens
@@ -82,7 +82,7 @@ edition_sampled AS (
   FROM oceanops.cruise_line cl
   JOIN oceanops.cruise c ON c.id = cl.cruise_id
   WHERE cl.line_id IN (SELECT line_id FROM design_lines)
-    AND c.departure_date >= DATE '{{GOSHIP_EDITION_SINCE}}'
+    AND c.departure_date >= DATE '{{ROLLING_12M_SINCE}}'
     AND c.departure_date <= DATE '{{GOSHIP_EDITION_UNTIL}}'
 ),
 recent_sampled AS (
@@ -91,7 +91,7 @@ recent_sampled AS (
   JOIN oceanops.cruise c ON c.id = cl.cruise_id
   WHERE cl.line_id IN (SELECT line_id FROM design_lines)
     AND c.departure_date >= DATE '{{GOSHIP_RECENT_SINCE}}'
-    AND c.departure_date < DATE '{{GOSHIP_EDITION_SINCE}}'
+    AND c.departure_date < DATE '{{ROLLING_12M_SINCE}}'
 ),
 decadal_plan AS (
   SELECT DISTINCT ls.line_id
@@ -109,7 +109,7 @@ line_edition_countries AS (
   JOIN oceanops.cruise cr ON cr.id = cl.cruise_id
   JOIN cruise_lead_country clc ON clc.cruise_id = cr.id
   WHERE cl.line_id IN (SELECT line_id FROM design_lines)
-    AND cr.departure_date >= DATE '{{GOSHIP_EDITION_SINCE}}'
+    AND cr.departure_date >= DATE '{{ROLLING_12M_SINCE}}'
     AND cr.departure_date <= DATE '{{GOSHIP_EDITION_UNTIL}}'
   GROUP BY cl.line_id
 ),
@@ -132,7 +132,7 @@ edition_cruises AS (
   LEFT JOIN oceanops.country ship_co ON ship_co.id = s.country_id
   LEFT JOIN cruise_lead_country clc ON clc.cruise_id = c.id
   WHERE cl.line_id IN (SELECT line_id FROM design_lines)
-    AND c.departure_date >= DATE '{{GOSHIP_EDITION_SINCE}}'
+    AND c.departure_date >= DATE '{{ROLLING_12M_SINCE}}'
     AND c.departure_date <= DATE '{{GOSHIP_EDITION_UNTIL}}'
   GROUP BY cl.line_id
 )
@@ -190,7 +190,7 @@ SELECT jsonb_build_object(
         'edition_country_codes', COALESCE(lec.country_codes, ''),
         'edition_cruises', COALESCE(ec.edition_cruises, '[]'::jsonb)::text,
         'edition_status', CASE
-          WHEN es.line_id IS NOT NULL THEN 'Sampled since 2025'
+          WHEN es.line_id IS NOT NULL THEN 'Sampled in last 12 months'
           WHEN rs.line_id IS NOT NULL THEN 'Sampled 2023–2024'
           WHEN lc.departure_date IS NULL THEN 'No cruise recorded'
           WHEN dp.line_id IS NOT NULL THEN 'In 2025–2034 GO-SHIP decadal plan'
@@ -237,7 +237,7 @@ SELECT {{PARTNER_COUNTRY_ISO:clc.country_code2}} AS code2, COUNT(DISTINCT cr.id)
 FROM design_lines dl
 JOIN cruise_line cl ON cl.line_id = dl.line_id
 JOIN cruise cr ON cr.id = cl.cruise_id
-  AND cr.departure_date >= DATE '{{GOSHIP_EDITION_SINCE}}'
+  AND cr.departure_date >= DATE '{{ROLLING_12M_SINCE}}'
   AND cr.departure_date <= DATE '{{GOSHIP_EDITION_UNTIL}}'
 JOIN cruise_lead_country clc ON clc.cruise_id = cr.id
 GROUP BY 1

@@ -2,7 +2,7 @@
  * Combined partner + GeoJSON export summary (single block for export:all).
  */
 
-import { loadEditionValues, renderEditionSummary, resolveObsPeriodBounds } from './editionValues.mjs'
+import { loadEditionValues, renderEditionSummary, resolveObsPeriodBounds, editionValueTokens, resolveExportAsOfDate } from './editionValues.mjs'
 import { LAYER_MANIFEST } from './geojson-export/exportConfig.mjs'
 import {
   EXPORT_EDITION_LABEL,
@@ -16,10 +16,10 @@ import {
   yearFromIsoDate,
 } from './geojson-export/lineStyleSummary.mjs'
 
-/** @param {string} layerId @param {import('./editionValues.mjs').EditionValues} values */
-function lineSampledSinceLabel(layerId, values) {
-  if (layerId === 'goship') return yearFromIsoDate(values.GOSHIP_EDITION_SINCE)
-  if (layerId === 'oceantrax') return yearFromIsoDate(values.SOOP_XBT_SAMPLED_SINCE)
+/** @param {string} layerId */
+function lineSampledSinceLabel(layerId) {
+  if (layerId === 'goship') return 'last 12 months'
+  if (layerId === 'oceantrax') return yearFromIsoDate(loadEditionValues().SOOP_XBT_SAMPLED_SINCE)
   return '?'
 }
 
@@ -59,7 +59,7 @@ export function printCombinedExportSummary(byNetwork, countsByLayer, lineStyleBy
       writeLineStyleSummaryLines(
         process.stderr,
         lineStyle,
-        lineSampledSinceLabel(layerId, values),
+        lineSampledSinceLabel(layerId),
         layerId === 'oceantrax'
           ? {
               solidLabel: 'active',
@@ -86,12 +86,11 @@ export function printCombinedExportSummary(byNetwork, countsByLayer, lineStyleBy
   }
 
   process.stderr.write('Shared edition values\n')
+  process.stderr.write(`  EXPORT_AS_OF: ${resolveExportAsOfDate()}\n`)
   process.stderr.write(`  LAYER_TABLE_PTF_STATUS_IN: ${values.LAYER_TABLE_PTF_STATUS_IN}\n`)
-  process.stderr.write(`  OCEAN_GLIDERS_MIN_LOC_DATE: ${values.OCEAN_GLIDERS_MIN_LOC_DATE}\n`)
-  process.stderr.write(`  ANIBOS_MIN_LOC_DATE: ${values.ANIBOS_MIN_LOC_DATE}\n`)
-  process.stderr.write(`  FVON_MIN_LOC_DATE: ${values.FVON_MIN_LOC_DATE}\n`)
+  const tokens = editionValueTokens()
+  process.stderr.write(`  ROLLING_12M_SINCE: ${tokens.ROLLING_12M_SINCE}\n`)
   process.stderr.write(`  SOOP_XBT_SAMPLED_SINCE: ${values.SOOP_XBT_SAMPLED_SINCE}\n`)
-  process.stderr.write(`  GOSHIP_EDITION_SINCE: ${values.GOSHIP_EDITION_SINCE}\n`)
   process.stderr.write(`  GOSHIP_RECENT_SINCE: ${values.GOSHIP_RECENT_SINCE}\n`)
   process.stderr.write(`  GOSHIP_DECADAL_SINCE: ${values.GOSHIP_DECADAL_SINCE}\n`)
   process.stderr.write(`  GOSHIP_DECADAL_UNTIL: ${values.GOSHIP_DECADAL_UNTIL}\n`)

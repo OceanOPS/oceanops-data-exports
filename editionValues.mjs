@@ -1,6 +1,10 @@
 /**
  * Edition knobs only (dates, line lists, shared status lists).
  * SQL files keep the WHERE shape; replace {{TOKENS}} before export / pgAdmin.
+ *
+ * Optional EXPORT_AS_OF (YYYY-MM-DD): fixed as-of date for rolling 12-month windows
+ * and GO-SHIP edition until. Omitted → today when the export command runs.
+ * Override at runtime: EXPORT_AS_OF or GOSHIP_EDITION_UNTIL env vars.
  */
 
 import fs from 'node:fs'
@@ -10,7 +14,47 @@ import { fileURLToPath } from 'node:url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export const EDITION_VALUES_PATH = path.join(__dirname, 'edition.values.json')
 
-/** @typedef {{ PTF_STATUS_OPERATIONAL: string, LAYER_TABLE_PTF_STATUS_IN: string, OBS_PERIOD_SINCE: string, OBS_PERIOD_UNTIL?: string, OCEAN_GLIDERS_MIN_LOC_DATE: string, ANIBOS_MIN_LOC_DATE: string, FVON_MIN_LOC_DATE: string, SOOP_XBT_SAMPLED_SINCE: string, GOSHIP_EDITION_SINCE: string, GOSHIP_RECENT_SINCE: string, GOSHIP_DECADAL_SINCE: string, GOSHIP_DECADAL_UNTIL: string }} EditionValues */
+/** @typedef {{ PTF_STATUS_OPERATIONAL: string, LAYER_TABLE_PTF_STATUS_IN: string, OBS_PERIOD_SINCE: string, OBS_PERIOD_UNTIL?: string, EXPORT_AS_OF?: string, SOOP_XBT_SAMPLED_SINCE: string, GOSHIP_RECENT_SINCE: string, GOSHIP_DECADAL_SINCE: string, GOSHIP_DECADAL_UNTIL: string }} EditionValues */
+
+/** @param {string} isoDate YYYY-MM-DD */
+export function resolveRolling12MonthsSince(isoDate) {
+  const d = new Date(`${isoDate}T00:00:00Z`)
+  d.setUTCMonth(d.getUTCMonth() - 12)
+  return d.toISOString().slice(0, 10)
+}
+
+/** @param {string | null | undefined} isoDate */
+function normalizeIsoDate(isoDate) {
+  const trimmed = isoDate?.trim()
+  if (!trimmed) return null
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    throw new Error(`Invalid ISO date "${trimmed}" — expected YYYY-MM-DD`)
+  }
+  return trimmed
+}
+
+/**
+ * Export as-of date (upper bound for rolling windows and GO-SHIP edition until).
+ * Priority: runtime override → edition.values.json EXPORT_AS_OF → EXPORT_AS_OF env
+ *   → GOSHIP_EDITION_UNTIL env → today (when the export command runs).
+ * @returns {string}
+ */
+export function resolveExportAsOfDate() {
+  const runtime = normalizeIsoDate(exportAsOfDate)
+  if (runtime) return runtime
+
+  const v = loadEditionValues()
+  const fromEdition = normalizeIsoDate(v.EXPORT_AS_OF)
+  if (fromEdition) return fromEdition
+
+  const fromEnv = normalizeIsoDate(process.env.EXPORT_AS_OF)
+  if (fromEnv) return fromEnv
+
+  const fromGoshipEnv = normalizeIsoDate(process.env.GOSHIP_EDITION_UNTIL)
+  if (fromGoshipEnv) return fromGoshipEnv
+
+  return new Date().toISOString().slice(0, 10)
+}
 
 /** @type {EditionValues | null} */
 let cache = null
@@ -44,10 +88,7 @@ export function sqlQuotedNameList(names) {
  */
 export function resolveObsPeriodBounds() {
   const v = loadEditionValues()
-  const asOf =
-    exportAsOfDate ??
-    process.env.GOSHIP_EDITION_UNTIL ??
-    new Date().toISOString().slice(0, 10)
+  const asOf = resolveExportAsOfDate()
   const since =
     v.OBS_PERIOD_SINCE?.trim() || `${asOf.slice(0, 4)}-01-01`
   const until = v.OBS_PERIOD_UNTIL?.trim() || asOf
@@ -57,22 +98,21 @@ export function resolveObsPeriodBounds() {
 /** @returns {Record<string, string>} */
 export function editionValueTokens() {
   const v = loadEditionValues()
-  const asOf =
-    exportAsOfDate ??
-    process.env.GOSHIP_EDITION_UNTIL ??
-    new Date().toISOString().slice(0, 10)
+  const asOf = resolveExportAsOfDate()
   const { since: obsSince, until: obsUntil } = resolveObsPeriodBounds()
+  const rolling12mSince = resolveRolling12MonthsSince(asOf)
 
   return {
     PTF_STATUS_OPERATIONAL: v.PTF_STATUS_OPERATIONAL,
     LAYER_TABLE_PTF_STATUS_IN: v.LAYER_TABLE_PTF_STATUS_IN,
     OBS_PERIOD_SINCE: obsSince,
     OBS_PERIOD_UNTIL: obsUntil,
-    OCEAN_GLIDERS_MIN_LOC_DATE: v.OCEAN_GLIDERS_MIN_LOC_DATE,
-    ANIBOS_MIN_LOC_DATE: v.ANIBOS_MIN_LOC_DATE,
-    FVON_MIN_LOC_DATE: v.FVON_MIN_LOC_DATE,
+    ROLLING_12M_SINCE: rolling12mSince,
+    OCEAN_GLIDERS_MIN_LOC_DATE: rolling12mSince,
+    ANIBOS_MIN_LOC_DATE: rolling12mSince,
+    FVON_MIN_LOC_DATE: rolling12mSince,
     SOOP_XBT_SAMPLED_SINCE: v.SOOP_XBT_SAMPLED_SINCE,
-    GOSHIP_EDITION_SINCE: v.GOSHIP_EDITION_SINCE,
+    GOSHIP_EDITION_SINCE: rolling12mSince,
     GOSHIP_RECENT_SINCE: v.GOSHIP_RECENT_SINCE,
     GOSHIP_DECADAL_SINCE: v.GOSHIP_DECADAL_SINCE,
     GOSHIP_DECADAL_UNTIL: v.GOSHIP_DECADAL_UNTIL,

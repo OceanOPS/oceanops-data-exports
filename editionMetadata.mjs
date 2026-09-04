@@ -5,17 +5,22 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
-import { loadEditionValues, resolveObsPeriodBounds } from './editionValues.mjs'
+import { loadEditionValues, resolveObsPeriodBounds, editionValueTokens, resolveExportAsOfDate } from './editionValues.mjs'
 
 /** @returns {Record<string, string>} */
 export function buildEditionMetadata() {
   const v = loadEditionValues()
+  const tokens = editionValueTokens()
+  const asOf = resolveExportAsOfDate()
   return {
-    OCEAN_GLIDERS_MIN_LOC_DATE: v.OCEAN_GLIDERS_MIN_LOC_DATE,
-    ANIBOS_MIN_LOC_DATE: v.ANIBOS_MIN_LOC_DATE,
-    FVON_MIN_LOC_DATE: v.FVON_MIN_LOC_DATE,
+    EXPORT_AS_OF: asOf,
+    GOSHIP_EDITION_UNTIL: tokens.GOSHIP_EDITION_UNTIL,
+    ROLLING_12M_SINCE: tokens.ROLLING_12M_SINCE,
+    OCEAN_GLIDERS_MIN_LOC_DATE: tokens.OCEAN_GLIDERS_MIN_LOC_DATE,
+    ANIBOS_MIN_LOC_DATE: tokens.ANIBOS_MIN_LOC_DATE,
+    FVON_MIN_LOC_DATE: tokens.FVON_MIN_LOC_DATE,
     SOOP_XBT_SAMPLED_SINCE: v.SOOP_XBT_SAMPLED_SINCE,
-    GOSHIP_EDITION_SINCE: v.GOSHIP_EDITION_SINCE,
+    GOSHIP_EDITION_SINCE: tokens.GOSHIP_EDITION_SINCE,
     GOSHIP_RECENT_SINCE: v.GOSHIP_RECENT_SINCE,
     GOSHIP_DECADAL_SINCE: v.GOSHIP_DECADAL_SINCE,
     GOSHIP_DECADAL_UNTIL: v.GOSHIP_DECADAL_UNTIL,
@@ -27,7 +32,7 @@ export function buildEditionMetadata() {
 /** Full export metadata payload (SQL-backed fields + export run date). */
 export function buildExportMetadata(asOfDate) {
   return {
-    exportedAt: asOfDate ?? new Date().toISOString().slice(0, 10),
+    exportedAt: asOfDate ?? resolveExportAsOfDate(),
     ...buildEditionMetadata(),
   }
 }
