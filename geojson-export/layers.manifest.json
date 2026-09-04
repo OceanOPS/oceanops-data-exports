@@ -63,7 +63,7 @@
     },
     "oceangliders": {
       "geometryKind": "point",
-      "category": "Profiling_floats_Argo",
+      "category": "oceangliders",
       "summary": "OceanGliders — layer-table statuses, latest_loc_date >= OCEAN_GLIDERS_MIN_LOC_DATE",
       "densify": false
     },
