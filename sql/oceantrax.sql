@@ -1,6 +1,6 @@
 -- Layer: oceantrax
 -- Ocean TraX (SOOP) design lines — soop_xbt_design_2023_2024
--- Map: line_status active = solid, reactivate = dashed (both orange on map)
+-- Map: active design lines only (solid orange). Reactivate lines are excluded.
 -- Partner counts: manual file partner-export/manual/oceantrax.json (not from PostgreSQL)
 -- Country attribution on map: cruise_program (lead = 1) → program.country_id (not cruise_country)
 -- Ship name/country omitted when ship.hide_metadata = 1 (same rule as v_ptf_depl_rv on point layers).
@@ -8,7 +8,7 @@
 
 -- @where
 g.shape IS NOT NULL
-AND g.line_status IN ('active', 'reactivate')
+AND g.line_status = 'active'
 
 -- @geojson
 WITH design_lines AS (
@@ -126,7 +126,7 @@ SELECT jsonb_build_object(
         'line_id', d.line_id,
         'line_name', d.name,
         'line_status', d.line_status,
-        'line_style', CASE WHEN d.line_status = 'active' THEN 'solid' ELSE 'dash' END,
+        'line_style', 'solid',
         'sampled_in_edition', (es.line_id IS NOT NULL),
         'last_cruise_date', to_char(lc.departure_date, 'YYYY-MM-DD'),
         'last_cruise_ref', lc.cruise_ref,
