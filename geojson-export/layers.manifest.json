@@ -31,6 +31,13 @@
       "summary": "SOCONET UND ships — one point per ship (earliest deployment, ptf_status >= REGISTERED)",
       "densify": false
     },
+    "soconet_moorings": {
+      "geometryKind": "point",
+      "category": "soconet_moorings",
+      "summary": "SOCONET moorings — network LIKE SOCONET, no status filter",
+      "densify": false,
+      "geojsonOnly": true
+    },
     "gloss": {
       "geometryKind": "point",
       "category": "gloss",

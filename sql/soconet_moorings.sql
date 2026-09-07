@@ -1,12 +1,10 @@
--- Layer: oceansites
--- OceanSITES moorings — OPERATIONAL or INACTIVE
--- Edit filter under @where; edition.values.json for shared tokens.
--- pgAdmin: npm run render:sql -- sql/oceansites.sql
---
--- Pending ranked-per-WMO rewrite: sql/oceansites.pending.sql (must stay outside @partner section)
+-- Layer: soconet_moorings
+-- SOCONET moorings — full network (no ptf_status filter)
+-- Map: square marker; legend grouped with soconet ships (sql/soconet.sql)
+-- pgAdmin: npm run render:sql -- sql/soconet_moorings.sql
 
 -- @where
-t.ptf_status IN (4, 6) AND t.network LIKE '%OceanSITES%'
+t.network LIKE '%SOCONET%'
 AND t.country IS NOT NULL
 AND TRIM(t.country) <> ''
 AND t.country_iso_code2 IS NOT NULL
@@ -21,7 +19,7 @@ SELECT jsonb_build_object(
       'type', 'Feature',
       'geometry', ST_AsGeoJSON(t.shape)::jsonb,
       'properties', jsonb_build_object(
-        'category', 'oceansites',
+        'category', 'soconet_moorings',
         'ptf_id', t.ptf_id,
         'ptf_ref', t.ptf_ref,
         'ptf_model', t.ptf_model,
@@ -47,7 +45,7 @@ LEFT JOIN (
 WHERE {{WHERE}};
 
 -- @partner
--- Reporting ISO: sql/_partner_country_iso.sql (HK->CN, EN->EU, exclude AQ/UN/...)
+-- GeoJSON-only layer (counts rolled into soconet ships in report card for now)
 SELECT {{PARTNER_COUNTRY_ISO:t.country_iso_code2}} AS country_iso_code2, COUNT(*)::int
 FROM oceanops_gis.ptf_loc_n AS t
 WHERE ({{WHERE}})

@@ -71,6 +71,7 @@ export const GEOJSON_SQL_SOURCE = {
   goship: 'goship_design_goship_1',
   oceantrax: 'soop_xbt_design_2023_2024',
   soconet: 'ptf_loc_0',
+  soconet_moorings: 'ptf_loc_n',
 }
 
 /** @param {string} content */

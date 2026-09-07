@@ -56,20 +56,28 @@ export const EXPORT_EDITION_LABEL =
 
 export const LAYER_MANIFEST = manifest.layers
 
-/** Same order as partner export (`NETWORK_KEYS`). */
-export const LAYER_IDS = NETWORK_KEYS.map((partnerKey) => {
-  const layerId = PARTNER_KEY_TO_LAYER_ID[partnerKey]
-  if (!layerId || !LAYER_MANIFEST[layerId]) {
-    throw new Error(
-      `layers.manifest.json must define "${layerId}" for partner network "${partnerKey}"`,
-    )
-  }
-  return layerId
-})
+/** GeoJSON export layers: partner networks + optional map-only layers (geojsonOnly in manifest). */
+export const GEOJSON_ONLY_LAYER_IDS = Object.entries(LAYER_MANIFEST)
+  .filter(([, entry]) => entry.geojsonOnly === true)
+  .map(([layerId]) => layerId)
+
+/** Same order as partner export (`NETWORK_KEYS`), then geojson-only layers. */
+export const LAYER_IDS = [
+  ...NETWORK_KEYS.map((partnerKey) => {
+    const layerId = PARTNER_KEY_TO_LAYER_ID[partnerKey]
+    if (!layerId || !LAYER_MANIFEST[layerId]) {
+      throw new Error(
+        `layers.manifest.json must define "${layerId}" for partner network "${partnerKey}"`,
+      )
+    }
+    return layerId
+  }),
+  ...GEOJSON_ONLY_LAYER_IDS,
+]
 
 for (const layerId of Object.keys(LAYER_MANIFEST)) {
   if (!LAYER_IDS.includes(layerId)) {
-    throw new Error(`Layer "${layerId}" is in layers.manifest.json but not in partner NETWORK_KEYS`)
+    throw new Error(`Layer "${layerId}" is in layers.manifest.json but not exported (partner or geojsonOnly)`)
   }
 }
 
