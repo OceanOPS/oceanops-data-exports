@@ -1,5 +1,6 @@
 -- Layer: soconet
 -- SOCONET UND ships — one point per ship (earliest deployment in ptf_loc_0)
+-- country_ship / country_sensor_provider: one row per ptf_id (views may return multiple matches).
 -- Edit filter under @where; edition.values.json for shared tokens.
 -- pgAdmin: npm run render:sql -- sql/soconet.sql
 
@@ -27,7 +28,9 @@ SELECT jsonb_build_object(
         'ptf_model', t.ptf_model,
         'ship', t.ship,
         'country_name', t.country,
-        'country_iso_reporting', {{PARTNER_COUNTRY_ISO:t.country_iso_code2}}
+        'country_iso_reporting', {{PARTNER_COUNTRY_ISO:t.country_iso_code2}},
+        'country_ship', rv.ship_country,
+        'country_sensor_provider', sp.sensor_country
       )
     )
   ), '[]'::jsonb)
@@ -42,6 +45,16 @@ FROM (
   FROM oceanops_gis.ptf_loc_0 AS p
   WHERE {{WHERE}}
 ) AS t
+LEFT JOIN (
+  SELECT DISTINCT ON (ptf_id) ptf_id, ship_country
+  FROM oceanops.v_ptf_depl_rv
+  ORDER BY ptf_id, deployment_date DESC NULLS LAST
+) rv ON t.ptf_id = rv.ptf_id
+LEFT JOIN (
+  SELECT DISTINCT ON (ptf_id) ptf_id, sensor_country
+  FROM oceanops.v_sensor_provider
+  ORDER BY ptf_id, sensor_model
+) sp ON t.ptf_id = sp.ptf_id
 WHERE t.rn = 1;
 
 -- @partner

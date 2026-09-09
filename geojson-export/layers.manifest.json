@@ -65,7 +65,7 @@
     "oceansites": {
       "geometryKind": "point",
       "category": "oceansites",
-      "summary": "OceanSITES moorings — OPERATIONAL or INACTIVE",
+      "summary": "OceanSITES moorings — OPERATIONAL or INACTIVE; latest deployment per WMO",
       "densify": false
     },
     "oceangliders": {

@@ -1,5 +1,6 @@
 -- Layer: soconet_moorings
 -- SOCONET moorings — full network (no ptf_status filter)
+-- country_ship / country_sensor_provider: one row per ptf_id (views may return multiple matches).
 -- Map: square marker; legend grouped with soconet ships (sql/soconet.sql)
 -- pgAdmin: npm run render:sql -- sql/soconet_moorings.sql
 
