@@ -1,5 +1,5 @@
 -- Layer: oceansites
--- OceanSITES moorings — OPERATIONAL or INACTIVE; one point per GTS/WMO (latest_loc_date)
+-- OceanSITES moorings — one point per GTS/WMO (latest_loc_date)
 -- Dedup: ROW_NUMBER() PARTITION BY gts_id ORDER BY latest_loc_date DESC (RC2026 / colleague request)
 -- country_ship: one row per ptf_id; country_sensor_provider: comma-separated cross-program sensor countries.
 -- Edit filter under @where; edition.values.json for shared tokens.
@@ -7,7 +7,6 @@
 
 -- @where
 t.network LIKE '%OceanSITES%'
-AND t.ptf_status IN (4, 6)
 AND t.gts_id IS NOT NULL
 AND TRIM(t.gts_id) <> ''
 AND t.country IS NOT NULL
