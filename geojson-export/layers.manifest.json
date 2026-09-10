@@ -34,9 +34,8 @@
     "soconet_moorings": {
       "geometryKind": "point",
       "category": "soconet_moorings",
-      "summary": "SOCONET moorings — network LIKE SOCONET, no status filter",
-      "densify": false,
-      "geojsonOnly": true
+      "summary": "SOCONET moorings (MB) — network LIKE SOCONET, no status filter",
+      "densify": false
     },
     "gloss": {
       "geometryKind": "point",
@@ -65,7 +64,7 @@
     "oceansites": {
       "geometryKind": "point",
       "category": "oceansites",
-      "summary": "OceanSITES moorings — OPERATIONAL or INACTIVE; latest deployment per WMO",
+      "summary": "OceanSITES moorings — OPERATIONAL or INACTIVE; one point per gts_id (latest_loc_date)",
       "densify": false
     },
     "oceangliders": {

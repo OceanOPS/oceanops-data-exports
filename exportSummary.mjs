@@ -8,7 +8,7 @@ import {
   EXPORT_EDITION_LABEL,
   NETWORK_CRITERIA,
 } from './partner-export/exportConfig.mjs'
-import { NETWORK_KEYS } from './partner-export/networkFilters.mjs'
+import { NETWORK_KEYS, partnerNetworkLogLabel } from './partner-export/networkFilters.mjs'
 import { isManualPartnerNetwork, manualPartnerCountsHint } from './partner-export/manualPartnerCounts.mjs'
 import { formatGeojsonSqlHint, formatNetworkSqlHint, GEOJSON_SQL_SOURCE } from './networkSql.mjs'
 import {
@@ -45,7 +45,7 @@ export function printCombinedExportSummary(byNetwork, countsByLayer, lineStyleBy
     const partnerTotal = Object.values(byNetwork[partnerKey] ?? {}).reduce((a, b) => a + b, 0)
     const geojsonFeatures = countsByLayer[layerId] ?? 0
 
-    process.stderr.write(`${partnerKey} · ${layerId}\n`)
+    process.stderr.write(`${partnerNetworkLogLabel(partnerKey)} · ${layerId}\n`)
     if (isManualPartnerNetwork(partnerKey)) {
       process.stderr.write(`  Partner total: ${partnerTotal}  |  GeoJSON lines: ${geojsonFeatures} (manual counts — not 1:1)\n`)
       process.stderr.write(`  Partner source: ${manualPartnerCountsHint(partnerKey)}\n`)

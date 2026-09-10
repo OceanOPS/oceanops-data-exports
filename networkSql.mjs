@@ -52,6 +52,7 @@ export const PARTNER_KEY_TO_LAYER_ID = {
   sotVos: 'vos',
   sotAsap: 'asap',
   soconet: 'soconet',
+  soconetMoorings: 'soconet_moorings',
   gloss: 'gloss',
   oceanSites: 'oceansites',
   mooredBuoys: 'moored_buoys',

@@ -1,11 +1,12 @@
 -- Layer: soconet_moorings
--- SOCONET moorings — full network (no ptf_status filter)
--- country_ship / country_sensor_provider: one row per ptf_id (views may return multiple matches).
+-- SOCONET moorings — ptf_family MB only (no ptf_status filter)
+-- country_ship: one row per ptf_id; country_sensor_provider: comma-separated cross-program sensor countries.
 -- Map: square marker; legend grouped with soconet ships (sql/soconet.sql)
 -- pgAdmin: npm run render:sql -- sql/soconet_moorings.sql
 
 -- @where
 t.network LIKE '%SOCONET%'
+AND t.ptf_family = 'MB'
 AND t.country IS NOT NULL
 AND TRIM(t.country) <> ''
 AND t.country_iso_code2 IS NOT NULL
@@ -39,14 +40,15 @@ LEFT JOIN (
   ORDER BY ptf_id, deployment_date DESC NULLS LAST
 ) rv ON t.ptf_id = rv.ptf_id
 LEFT JOIN (
-  SELECT DISTINCT ON (ptf_id) ptf_id, sensor_country
+  SELECT ptf_id,
+    string_agg(DISTINCT sensor_country, ', ' ORDER BY sensor_country) AS sensor_country
   FROM oceanops.v_sensor_provider
-  ORDER BY ptf_id, sensor_model
+  GROUP BY ptf_id
 ) sp ON t.ptf_id = sp.ptf_id
 WHERE {{WHERE}};
 
 -- @partner
--- GeoJSON-only layer (counts rolled into soconet ships in report card for now)
+-- Reporting ISO: sql/_partner_country_iso.sql (HK->CN, EN->EU, exclude AQ/UN/...)
 SELECT {{PARTNER_COUNTRY_ISO:t.country_iso_code2}} AS country_iso_code2, COUNT(*)::int
 FROM oceanops_gis.ptf_loc_n AS t
 WHERE ({{WHERE}})

@@ -11,6 +11,7 @@ export const NETWORK_KEYS = [
   'sotVos',
   'sotAsap',
   'soconet',
+  'soconetMoorings',
   'oceantrax',
   'goShip',
   'gloss',
@@ -25,3 +26,14 @@ export const LINE_NETWORK_KEYS = ['goShip', 'oceantrax']
 export const PLATFORM_NETWORK_KEYS = NETWORK_KEYS.filter(
   (key) => !LINE_NETWORK_KEYS.includes(key),
 )
+
+/** Partner export log labels (stderr). */
+export const PARTNER_NETWORK_LOG_LABELS = {
+  soconet: 'soconet (ships)',
+  soconetMoorings: 'soconet (moored buoys)',
+}
+
+/** @param {string} networkKey */
+export function partnerNetworkLogLabel(networkKey) {
+  return PARTNER_NETWORK_LOG_LABELS[networkKey] ?? networkKey
+}

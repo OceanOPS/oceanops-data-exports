@@ -6,7 +6,7 @@
 -- 4. Register in `geojson-export/layers.manifest.json`
 -- 5. pgAdmin: npm run render:sql -- sql/<layerId>.sql
 --
--- country_ship / country_sensor_provider: one row per ptf_id (views may return multiple matches).
+-- country_ship: one row per ptf_id; country_sensor_provider: comma-separated cross-program sensor countries.
 -- To omit ship or sensor country from popups, comment out JOIN + property lines in @geojson.
 --
 -- @where and @partner share {{WHERE}} so GeoJSON feature count = SUM(partner counts by country).
@@ -48,9 +48,10 @@ LEFT JOIN (
   ORDER BY ptf_id, deployment_date DESC NULLS LAST
 ) rv ON t.ptf_id = rv.ptf_id
 LEFT JOIN (
-  SELECT DISTINCT ON (ptf_id) ptf_id, sensor_country
+  SELECT ptf_id,
+    string_agg(DISTINCT sensor_country, ', ' ORDER BY sensor_country) AS sensor_country
   FROM oceanops.v_sensor_provider
-  ORDER BY ptf_id, sensor_model
+  GROUP BY ptf_id
 ) sp ON t.ptf_id = sp.ptf_id
 WHERE {{WHERE}};
 

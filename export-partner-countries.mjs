@@ -18,7 +18,11 @@ import { formatDatabaseUrlForLog, loadDotEnv } from './databaseUrl.mjs'
 import { assertPsqlAvailable } from './geojson-export/db.mjs'
 
 loadDotEnv()
-import { LINE_NETWORK_KEYS, NETWORK_KEYS } from './partner-export/networkFilters.mjs'
+import {
+  LINE_NETWORK_KEYS,
+  NETWORK_KEYS,
+  partnerNetworkLogLabel,
+} from './partner-export/networkFilters.mjs'
 import { isManualPartnerNetwork, manualPartnerCountsHint } from './partner-export/manualPartnerCounts.mjs'
 import { fetchPartnerCountsByCountryOrThrow } from './partner-export/runPartnerSql.mjs'
 import {
@@ -65,7 +69,7 @@ function exportCountsFromDatabase() {
   const byNetwork = {}
 
   for (const networkKey of NETWORK_KEYS) {
-    process.stderr.write(`  ${networkKey}… `)
+    process.stderr.write(`  ${partnerNetworkLogLabel(networkKey)}… `)
     byNetwork[networkKey] = fetchPartnerCountsByCountryOrThrow(networkKey)
     const total = Object.values(byNetwork[networkKey]).reduce((a, b) => a + b, 0)
     if (isManualPartnerNetwork(networkKey)) {
@@ -163,6 +167,7 @@ interface CountryNetworks {
   sotVos: number
   sotAsap: number
   soconet: number
+  soconetMoorings: number
   oceantrax: number
   goShip: number // -1 represents "X" (participates but not counted)
   gloss: number
