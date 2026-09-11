@@ -84,7 +84,7 @@ function exportCountsFromDatabase() {
   return byNetwork
 }
 
-/** Active Ocean TraX design lines (legend total when all countries selected). */
+/** Active OceanTraX design lines (legend total when all countries selected). */
 function fetchOceanTraXActiveLineCount() {
   return queryScalarInt(
     `SELECT COUNT(*)::int FROM oceanops_gis.soop_xbt_design_2023_2024 WHERE line_status = 'active'`,

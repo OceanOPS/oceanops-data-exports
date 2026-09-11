@@ -26,7 +26,7 @@ export const NETWORK_CRITERIA = {
   sotAsap: { summary: 'OPERATIONAL ASAP ships', layerId: 'asap', sqlSource: 'ptf_loc_n' },
   soconet: { summary: 'SOCONET cruises (UND) — network LIKE SOCONET, no status filter', layerId: 'soconet', sqlSource: 'ptf_loc_n' },
   soconetMoorings: { summary: 'SOCONET moorings (MB) — network LIKE SOCONET, no status filter', layerId: 'soconet_moorings', sqlSource: 'ptf_loc_n' },
-  oceantrax: { summary: 'Ocean TraX — active design lines by program operating country (soop_xbt_design_2023_2024)', layerId: 'oceantrax', sqlSource: 'soop_xbt_design_2023_2024' },
+  oceantrax: { summary: 'OceanTraX — active design lines by program operating country (soop_xbt_design_2023_2024)', layerId: 'oceantrax', sqlSource: 'soop_xbt_design_2023_2024' },
   goShip: { summary: 'GO-SHIP — line_type <> Associated, name <> P03; partner counts = edition cruises (lead program country) in last 12 months', layerId: 'goship', sqlSource: 'cruise_program' },
   gloss: { summary: 'OPERATIONAL GLOSS sea-level gauges', layerId: 'gloss', sqlSource: 'ptf_loc_n' },
   oceanSites: { summary: 'OceanSITES moorings — OPERATIONAL or INACTIVE; one point per gts_id (latest_loc_date)', layerId: 'oceansites', sqlSource: 'ptf_loc_n' },

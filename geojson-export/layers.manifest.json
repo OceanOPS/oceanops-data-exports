@@ -95,7 +95,7 @@
       "geometryKind": "line",
       "category": "ship_based_oceanographic_sot",
       "sourceTable": "oceanops_gis.soop_xbt_design_2023_2024",
-      "summary": "Ocean TraX — active design lines (solid); partner = active lines by program operating country",
+      "summary": "OceanTraX — active design lines (solid); partner = active lines by program operating country",
       "densify": true
     }
   }

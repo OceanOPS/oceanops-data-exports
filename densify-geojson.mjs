@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Densify line GeoJSON for the 3D globe (GO-SHIP, Ocean TraX, etc.).
+ * Densify line GeoJSON for the 3D globe (GO-SHIP, OceanTraX, etc.).
  * Implementation: geojson-export/densifyLayer.mjs
  *
  * Usage:

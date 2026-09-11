@@ -81,7 +81,7 @@ ${networkExists(NETWORK_VOS)}`,
   },
   {
     id: 'soop-xbt',
-    label: 'Ocean TraX (SOT)',
+    label: 'OceanTraX (SOT)',
     gtsSource: 'GTS MF',
     table: 'oceanops.obs',
     extraWhere: `

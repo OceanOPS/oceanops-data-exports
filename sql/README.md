@@ -9,13 +9,13 @@ Each `*.sql` file holds the edition filter **once** and two runnable queries:
 |---------|---------|
 | `-- @where` | Filter fragment (no `WHERE` keyword); injected as `{{WHERE}}` in geojson/partner |
 | `-- @geojson` | Map export (`npm run export:geojson`) |
-| `-- @partner` | Country counts (`npm run export:partners`) — or **manual JSON** for Ocean TraX |
+| `-- @partner` | Country counts (`npm run export:partners`) — or **manual JSON** for OceanTraX |
 
 **Partner reporting ISO:** rollup/exclude rules in `sql/_partner_country_iso.sql`, referenced as `{{PARTNER_COUNTRY_ISO:column}}` in `@where`, `@geojson` (`country_iso_reporting`), and `@partner`.
 
 **Platform status:** `{{PTF_STATUS_OPERATIONAL}}` (= `6`) for operational-only layers; `{{LAYER_TABLE_PTF_STATUS_IN}}` (= `2,4,5,6`) for the recency-filtered layers (`anibos`, `fvon`, `oceangliders`). Codes: `partner-export/ptfStatus.mjs`. OceanSITES keeps a literal `IN (4, 6)`.
 
-**Ocean TraX:** partner counts from `sql/oceantrax.sql` `@partner` (active lines by program operating country). Legend total: `COUNT(*)` where `line_status = 'active'` on `soop_xbt_design_2023_2024` (stored in `partnerCountries.json` → `networkLegendTotals.oceantrax`).
+**OceanTraX:** partner counts from `sql/oceantrax.sql` `@partner` (active lines by program operating country). Legend total: `COUNT(*)` where `line_status = 'active'` on `soop_xbt_design_2023_2024` (stored in `partnerCountries.json` → `networkLegendTotals.oceantrax`).
 
 ## Before each edition
 

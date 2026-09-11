@@ -1,5 +1,5 @@
 -- Layer: oceantrax
--- Ocean TraX (SOOP) design lines — soop_xbt_design_2023_2024
+-- OceanTraX (SOOP) design lines — soop_xbt_design_2023_2024
 -- Map: active design lines only (solid orange). Reactivate lines are excluded.
 -- Partner counts: sql @partner (active lines by program operating country)
 -- Country attribution on map: cruise_program (lead = 1) → program.country_id (not cruise_country)
@@ -189,7 +189,7 @@ LEFT JOIN line_edition_countries lec ON lec.line_id = d.line_id
 LEFT JOIN edition_cruises ec ON ec.line_id = d.line_id;
 
 -- @partner
--- Active Ocean TraX design lines by operating country (programs column on design table)
+-- Active OceanTraX design lines by operating country (programs column on design table)
 -- Reporting ISO: sql/_partner_country_iso.sql (HK→CN, EN→EU, exclude AQ/UN/…)
 SET search_path TO oceanops, oceanops_gis, public;
 SELECT {{PARTNER_COUNTRY_ISO:c.code2}} AS country_iso_code2, COUNT(*)::int
