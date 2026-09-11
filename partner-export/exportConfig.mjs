@@ -7,8 +7,6 @@
 import { loadEditionValues, renderEditionSummary, editionValueTokens, resolveExportAsOfDate } from '../editionValues.mjs'
 import { formatNetworkSqlHint, PARTNER_KEY_TO_LAYER_ID } from '../networkSql.mjs'
 import { NETWORK_KEYS } from './networkFilters.mjs'
-import { isManualPartnerNetwork, manualPartnerCountsHint } from './manualPartnerCounts.mjs'
-
 export const EXPORT_EDITION_LABEL =
   process.env.PARTNER_EXPORT_EDITION
   ?? process.env.OCEANOPS_EXPORT_EDITION
@@ -26,9 +24,9 @@ export const NETWORK_CRITERIA = {
   fvon: { summary: 'FVON — layer-table statuses + latest_loc_date in last 12 months', layerId: 'fvon', sqlSource: 'ptf_loc_n' },
   sotVos: { summary: 'OPERATIONAL SOT/VOS ships', layerId: 'vos', sqlSource: 'ptf_loc_n' },
   sotAsap: { summary: 'OPERATIONAL ASAP ships', layerId: 'asap', sqlSource: 'ptf_loc_n' },
-  soconet: { summary: 'SOCONET ships (UND) — one point per ship (earliest deployment, ptf_status >= REGISTERED)', layerId: 'soconet', sqlSource: 'ptf_loc_0' },
+  soconet: { summary: 'SOCONET cruises (UND) — network LIKE SOCONET, no status filter', layerId: 'soconet', sqlSource: 'ptf_loc_n' },
   soconetMoorings: { summary: 'SOCONET moorings (MB) — network LIKE SOCONET, no status filter', layerId: 'soconet_moorings', sqlSource: 'ptf_loc_n' },
-  oceantrax: { summary: 'Ocean TraX — partner counts from partner-export/manual/oceantrax.json (manual ISO → count; map lines from sql/oceantrax.sql @geojson)', layerId: 'oceantrax', sqlSource: 'manual' },
+  oceantrax: { summary: 'Ocean TraX — active design lines by program operating country (soop_xbt_design_2023_2024)', layerId: 'oceantrax', sqlSource: 'soop_xbt_design_2023_2024' },
   goShip: { summary: 'GO-SHIP — line_type <> Associated, name <> P03; partner counts = edition cruises (lead program country) in last 12 months', layerId: 'goship', sqlSource: 'cruise_program' },
   gloss: { summary: 'OPERATIONAL GLOSS sea-level gauges', layerId: 'gloss', sqlSource: 'ptf_loc_n' },
   oceanSites: { summary: 'OceanSITES moorings — OPERATIONAL or INACTIVE; one point per gts_id (latest_loc_date)', layerId: 'oceansites', sqlSource: 'ptf_loc_n' },
@@ -56,11 +54,7 @@ export function printExportCriteriaSummary(byNetwork, config = {}) {
     const total = Object.values(byNetwork[key] ?? {}).reduce((a, b) => a + b, 0)
     process.stderr.write(`${key} (${total})\n`)
     process.stderr.write(`  ${renderEditionSummary(criteria.summary)}\n`)
-    if (isManualPartnerNetwork(key)) {
-      process.stderr.write(`  Source: ${manualPartnerCountsHint(key)}\n`)
-    } else {
-      process.stderr.write(`  SQL hint: ${formatNetworkSqlHint(criteria.layerId, criteria.sqlSource)}\n`)
-    }
+    process.stderr.write(`  SQL hint: ${formatNetworkSqlHint(criteria.layerId, criteria.sqlSource)}\n`)
     process.stderr.write(`  SQL: sql/${criteria.layerId}.sql\n`)
   }
 

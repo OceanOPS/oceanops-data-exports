@@ -27,8 +27,7 @@
     "soconet": {
       "geometryKind": "point",
       "category": "soconet",
-      "sourceTable": "oceanops_gis.ptf_loc_0",
-      "summary": "SOCONET UND ships — one point per ship (earliest deployment, ptf_status >= REGISTERED)",
+      "summary": "SOCONET cruises (UND) — network LIKE SOCONET, no status filter",
       "densify": false
     },
     "soconet_moorings": {
@@ -96,7 +95,7 @@
       "geometryKind": "line",
       "category": "ship_based_oceanographic_sot",
       "sourceTable": "oceanops_gis.soop_xbt_design_2023_2024",
-      "summary": "Ocean TraX design lines — line_status active = solid, reactivate = dashed (orange); partner = cruises since SOOP_XBT_SAMPLED_SINCE",
+      "summary": "Ocean TraX — active design lines (solid); partner = active lines by program operating country",
       "densify": true
     }
   }

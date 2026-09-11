@@ -15,7 +15,7 @@ Each `*.sql` file holds the edition filter **once** and two runnable queries:
 
 **Platform status:** `{{PTF_STATUS_OPERATIONAL}}` (= `6`) for operational-only layers; `{{LAYER_TABLE_PTF_STATUS_IN}}` (= `2,4,5,6`) for the recency-filtered layers (`anibos`, `fvon`, `oceangliders`). Codes: `partner-export/ptfStatus.mjs`. OceanSITES keeps a literal `IN (4, 6)`.
 
-**Ocean TraX:** partner counts come from `partner-export/manual/oceantrax.json` (reporting ISO → integer), not `@partner` SQL. Map lines still use `@geojson` in `sql/oceantrax.sql`.
+**Ocean TraX:** partner counts from `sql/oceantrax.sql` `@partner` (active lines by program operating country). Legend total: `COUNT(*)` where `line_status = 'active'` on `soop_xbt_design_2023_2024` (stored in `partnerCountries.json` → `networkLegendTotals.oceantrax`).
 
 ## Before each edition
 

@@ -23,8 +23,8 @@ import {
   NETWORK_KEYS,
   partnerNetworkLogLabel,
 } from './partner-export/networkFilters.mjs'
-import { isManualPartnerNetwork, manualPartnerCountsHint } from './partner-export/manualPartnerCounts.mjs'
 import { fetchPartnerCountsByCountryOrThrow } from './partner-export/runPartnerSql.mjs'
+import { queryScalarInt } from './partner-export/lineProgramCounts.mjs'
 import {
   EXPORT_EDITION_LABEL,
   printExportCriteriaSummary,
@@ -72,9 +72,7 @@ function exportCountsFromDatabase() {
     process.stderr.write(`  ${partnerNetworkLogLabel(networkKey)}… `)
     byNetwork[networkKey] = fetchPartnerCountsByCountryOrThrow(networkKey)
     const total = Object.values(byNetwork[networkKey]).reduce((a, b) => a + b, 0)
-    if (isManualPartnerNetwork(networkKey)) {
-      process.stderr.write(`${total} (manual ${manualPartnerCountsHint(networkKey)})\n`)
-    } else if (total === 0 && LINE_NETWORK_KEYS.includes(networkKey)) {
+    if (total === 0 && LINE_NETWORK_KEYS.includes(networkKey)) {
       process.stderr.write(
         `0 (no partner rows for selected design lines on this DB — check cruise_line/cruise_program)\n`,
       )
@@ -84,6 +82,13 @@ function exportCountsFromDatabase() {
   }
 
   return byNetwork
+}
+
+/** Active Ocean TraX design lines (legend total when all countries selected). */
+function fetchOceanTraXActiveLineCount() {
+  return queryScalarInt(
+    `SELECT COUNT(*)::int FROM oceanops_gis.soop_xbt_design_2023_2024 WHERE line_status = 'active'`,
+  )
 }
 
 /** @param {string} filePath */
@@ -221,6 +226,13 @@ function renderPartnerCountriesJson(countries, meta, contributingCountries) {
     }
   })
 
+  /** @type {Record<string, number>} */
+  const networkLegendTotals = {}
+  const oceantraxActiveLines = fetchOceanTraXActiveLineCount()
+  if (oceantraxActiveLines != null) {
+    networkLegendTotals.oceantrax = oceantraxActiveLines
+  }
+
   return {
     generatedAt,
     edition: EXPORT_EDITION_LABEL,
@@ -228,6 +240,7 @@ function renderPartnerCountriesJson(countries, meta, contributingCountries) {
     contributingCountries,
     countries: countryList,
     byGeoCountryName: buildGeoCountryIndex(countries, meta),
+    ...(Object.keys(networkLegendTotals).length > 0 ? { networkLegendTotals } : {}),
   }
 }
 

@@ -1,18 +1,17 @@
 -- Layer: soconet
--- SOCONET UND ships — one point per ship (earliest deployment in ptf_loc_0)
+-- SOCONET cruises (UND) — network LIKE SOCONET, ptf_family UND (no ptf_status filter)
 -- country_ship: one row per ptf_id; country_sensor_provider: comma-separated cross-program sensor countries.
--- Edit filter under @where; edition.values.json for shared tokens.
+-- Map: ship icon; legend grouped with soconet moorings (sql/soconet_moorings.sql)
 -- pgAdmin: npm run render:sql -- sql/soconet.sql
 
 -- @where
-p.network LIKE '%SOCONET%'
-AND p.ptf_family = 'UND'
-AND p.ptf_status >= 2
-AND p.country IS NOT NULL
-AND TRIM(p.country) <> ''
-AND p.country_iso_code2 IS NOT NULL
-AND TRIM(p.country_iso_code2) <> ''
-AND {{PARTNER_COUNTRY_ISO:p.country_iso_code2}} IS NOT NULL
+t.network LIKE '%SOCONET%'
+AND t.ptf_family = 'UND'
+AND t.country IS NOT NULL
+AND TRIM(t.country) <> ''
+AND t.country_iso_code2 IS NOT NULL
+AND TRIM(t.country_iso_code2) <> ''
+AND {{PARTNER_COUNTRY_ISO:t.country_iso_code2}} IS NOT NULL
 
 -- @geojson
 SELECT jsonb_build_object(
@@ -26,7 +25,6 @@ SELECT jsonb_build_object(
         'ptf_id', t.ptf_id,
         'ptf_ref', t.ptf_ref,
         'ptf_model', t.ptf_model,
-        'ship', t.ship,
         'country_name', t.country,
         'country_iso_reporting', {{PARTNER_COUNTRY_ISO:t.country_iso_code2}},
         'country_ship', rv.ship_country,
@@ -35,16 +33,7 @@ SELECT jsonb_build_object(
     )
   ), '[]'::jsonb)
 )
-FROM (
-  SELECT
-    p.*,
-    ROW_NUMBER() OVER (
-      PARTITION BY p.ship
-      ORDER BY p.depl_date ASC NULLS LAST
-    ) AS rn
-  FROM oceanops_gis.ptf_loc_0 AS p
-  WHERE {{WHERE}}
-) AS t
+FROM oceanops_gis.ptf_loc_n AS t
 LEFT JOIN (
   SELECT DISTINCT ON (ptf_id) ptf_id, ship_country
   FROM oceanops.v_ptf_depl_rv
@@ -56,22 +45,13 @@ LEFT JOIN (
   FROM oceanops.v_sensor_provider
   GROUP BY ptf_id
 ) sp ON t.ptf_id = sp.ptf_id
-WHERE t.rn = 1;
+WHERE {{WHERE}};
 
 -- @partner
 -- Reporting ISO: sql/_partner_country_iso.sql (HK->CN, EN->EU, exclude AQ/UN/...)
 SELECT {{PARTNER_COUNTRY_ISO:t.country_iso_code2}} AS country_iso_code2, COUNT(*)::int
-FROM (
-  SELECT
-    p.*,
-    ROW_NUMBER() OVER (
-      PARTITION BY p.ship
-      ORDER BY p.depl_date ASC NULLS LAST
-    ) AS rn
-  FROM oceanops_gis.ptf_loc_0 AS p
-  WHERE ({{WHERE}})
-) AS t
-WHERE t.rn = 1
+FROM oceanops_gis.ptf_loc_n AS t
+WHERE ({{WHERE}})
 GROUP BY 1
 HAVING {{PARTNER_COUNTRY_ISO:t.country_iso_code2}} IS NOT NULL
 ORDER BY 1;

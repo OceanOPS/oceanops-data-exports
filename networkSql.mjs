@@ -6,11 +6,6 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { renderEditionSql } from './editionValues.mjs'
-import {
-  isManualPartnerNetwork,
-  manualPartnerCountsHint,
-} from './partner-export/manualPartnerCounts.mjs'
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export const NETWORK_SQL_DIR = path.join(__dirname, 'sql')
 const PARTNER_COUNTRY_ISO_SQL_PATH = path.join(NETWORK_SQL_DIR, '_partner_country_iso.sql')
@@ -71,7 +66,7 @@ export const LAYER_ID_TO_PARTNER_KEY = Object.fromEntries(
 export const GEOJSON_SQL_SOURCE = {
   goship: 'goship_design_goship_1',
   oceantrax: 'soop_xbt_design_2023_2024',
-  soconet: 'ptf_loc_0',
+  soconet: 'ptf_loc_n',
   soconet_moorings: 'ptf_loc_n',
 }
 
@@ -162,11 +157,6 @@ export function readRenderedNetworkWhere(layerId) {
  * @param {string} [sqlSource]
  */
 export function formatNetworkSqlHint(layerId, sqlSource = 'ptf_loc_n') {
-  const partnerKey = LAYER_ID_TO_PARTNER_KEY[layerId]
-  if (partnerKey && isManualPartnerNetwork(partnerKey)) {
-    return manualPartnerCountsHint(partnerKey)
-  }
-
   const raw = fs.readFileSync(networkSqlPath(layerId), 'utf8')
   const parts = parseNetworkSqlSections(raw)
 

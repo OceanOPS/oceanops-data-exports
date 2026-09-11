@@ -61,8 +61,7 @@ npm run export:geojson -- --geojson-dir=/path/to/public/geojson
 2. **`../oceanops-simple-map/src/data/partnerCountries.json`** — globe country metrics (`byGeoCountryName` maps `CANADA` → `CA`, etc.).
 
 Configure edition **values** in **`edition.values.json`** (dates, line lists).  
-Configure **filters and queries** in **`sql/*.sql`** (`-- @where`, `-- @geojson`, `-- @partner` + `{{tokens}}`).  
-**Ocean TraX partner counts** are manual: edit **`partner-export/manual/oceantrax.json`** each edition (`"AU": 2`, …).
+Configure **filters and queries** in **`sql/*.sql`** (`-- @where`, `-- @geojson`, `-- @partner` + `{{tokens}}`).
 
 - `partner-export/countryMeta.mjs` — EU and other editorial country metadata (display names only; ISO rollup is in `sql/_partner_country_iso.sql`)
 - `geoCountryNames.mjs` — ISO ↔ GeoJSON `country_name` for the map

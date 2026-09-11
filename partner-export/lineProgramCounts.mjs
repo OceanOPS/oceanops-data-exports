@@ -51,3 +51,38 @@ export function queryCountryCounts(sql) {
 
   return counts
 }
+
+/** @param {string} sql @returns {number | null} */
+export function queryScalarInt(sql) {
+  const config = parseDatabaseUrl(resolveDatabaseUrl())
+  if (!config) return null
+
+  const result = spawnSync(
+    'psql',
+    [
+      '-h',
+      config.host,
+      '-p',
+      config.port,
+      '-U',
+      config.user,
+      '-d',
+      config.database,
+      '-t',
+      '-A',
+      '-c',
+      sql,
+    ],
+    {
+      encoding: 'utf8',
+      env: { ...process.env, PGPASSWORD: config.password },
+    },
+  )
+
+  if (result.error || result.status !== 0) return null
+
+  const raw = result.stdout.trim().split('\n')[0]?.trim()
+  if (!raw) return null
+  const n = Number.parseInt(raw, 10)
+  return Number.isFinite(n) ? n : null
+}

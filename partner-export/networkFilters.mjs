@@ -29,7 +29,7 @@ export const PLATFORM_NETWORK_KEYS = NETWORK_KEYS.filter(
 
 /** Partner export log labels (stderr). */
 export const PARTNER_NETWORK_LOG_LABELS = {
-  soconet: 'soconet (ships)',
+  soconet: 'soconet (cruises)',
   soconetMoorings: 'soconet (moored buoys)',
 }
 

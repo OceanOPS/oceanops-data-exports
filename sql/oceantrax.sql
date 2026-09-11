@@ -1,7 +1,7 @@
 -- Layer: oceantrax
 -- Ocean TraX (SOOP) design lines — soop_xbt_design_2023_2024
 -- Map: active design lines only (solid orange). Reactivate lines are excluded.
--- Partner counts: manual file partner-export/manual/oceantrax.json (not from PostgreSQL)
+-- Partner counts: sql @partner (active lines by program operating country)
 -- Country attribution on map: cruise_program (lead = 1) → program.country_id (not cruise_country)
 -- Ship name/country omitted when ship.hide_metadata = 1 (same rule as v_ptf_depl_rv on point layers).
 -- Edit filter under @where; edition.values.json for date tokens.
@@ -189,6 +189,22 @@ LEFT JOIN line_edition_countries lec ON lec.line_id = d.line_id
 LEFT JOIN edition_cruises ec ON ec.line_id = d.line_id;
 
 -- @partner
--- Manual only — not executed. Edit partner-export/manual/oceantrax.json before export:partners.
--- Format: ISO 3166-1 alpha-2 → integer count, e.g. { "AU": 2, "US": 5 }
--- See partner-export/manual/README.md
+-- Active Ocean TraX design lines by operating country (programs column on design table)
+-- Reporting ISO: sql/_partner_country_iso.sql (HK→CN, EN→EU, exclude AQ/UN/…)
+SET search_path TO oceanops, oceanops_gis, public;
+SELECT {{PARTNER_COUNTRY_ISO:c.code2}} AS country_iso_code2, COUNT(*)::int
+FROM (
+  SELECT
+    d.line_id,
+    TRIM(prog.program) AS program_name
+  FROM soop_xbt_design_2023_2024 AS d
+  CROSS JOIN LATERAL string_to_table(d.programs, ',') AS prog(program)
+  WHERE d.line_status = 'active'
+    AND d.programs IS NOT NULL
+    AND TRIM(d.programs) <> ''
+) AS vue_oceantrax
+JOIN program AS p ON p.name = vue_oceantrax.program_name
+JOIN country AS c ON c.id = p.country_id
+GROUP BY 1
+HAVING {{PARTNER_COUNTRY_ISO:c.code2}} IS NOT NULL
+ORDER BY 1;
