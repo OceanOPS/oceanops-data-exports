@@ -79,7 +79,7 @@ export const OBSERVATIONS_PERIOD_END = '${stats.periodEnd ?? ''}'${yoyLines}
  * @param {{ periodSince?: string, periodUntil?: string, year?: number | null, obsFilter: import('./observations-export/queries.mjs').ObsFilter }} range
  * @param {{ quiet?: boolean }} [opts]
  */
-function collectObservationStats(range, opts = {}) {
+export function collectObservationStats(range, opts = {}) {
   const stepOpts = { obsFilter: range.obsFilter }
   if (range.year) stepOpts.year = range.year
   else {

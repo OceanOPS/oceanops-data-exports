@@ -34,4 +34,6 @@ Each `*.sql` file holds the edition filter **once** and two runnable queries:
 
 **Observations per day (report card stat4):** read-only step queries in `observations-export/queries.mjs` (source hierarchy, `COUNT(*)` per table, sum in Node). Reference single-query: `sql/observations_per_day.sql`. Export: `npm run export:observations` (also writes YoY delta to `editionStats.ts`, per-network breakdown to `observations-network-yoy.json`, included in `export:all`). Skip network YoY with `--skip-network-yoy`.
 
+**Average obs/day by calendar year (since 2015):** `npm run export:observations:by-year` → `oceanops-report-card/public/edition/observations-by-year.csv` (+ `.json`). Options: `--from-year 2015`, `--to-year 2025`, `--obs-filter hierarchy`, `--output=/path/file.csv`. Does not overwrite `editionStats.ts`.
+
 Copy from `_template_point.sql` or `_template_line.sql` when adding a layer; register in `geojson-export/layers.manifest.json`.
