@@ -28,7 +28,9 @@ SELECT jsonb_build_object(
         'country_name', t.country,
         'country_iso_reporting', {{PARTNER_COUNTRY_ISO:t.country_iso_code2}},
         'country_ship', rv.ship_country,
-        'country_sensor_provider', sp.sensor_country
+        'country_sensor_provider', sp.sensor_country,
+        'ptf_family_name', pf.name,
+        'goos_networks', goos.goos_networks
       )
     )
   ), '[]'::jsonb)
@@ -45,6 +47,19 @@ LEFT JOIN (
   FROM oceanops.v_sensor_provider
   GROUP BY ptf_id
 ) sp ON t.ptf_id = sp.ptf_id
+LEFT JOIN oceanops.ptf p ON p.id = t.ptf_id
+LEFT JOIN oceanops.ptf_model pm ON pm.id = p.ptf_model_id
+LEFT JOIN oceanops.ptf_type pt ON pt.id = pm.ptf_type_id
+LEFT JOIN oceanops.ptf_family pf ON pf.id = pt.ptf_family_id
+LEFT JOIN (
+  SELECT
+    network_ptf.ptf_id,
+    string_agg(DISTINCT network.name_short, ', ' ORDER BY network.name_short) AS goos_networks
+  FROM oceanops.network_ptf
+  JOIN oceanops.network ON network_ptf.network_id = network.id
+  WHERE network.goos
+  GROUP BY network_ptf.ptf_id
+) goos ON goos.ptf_id = t.ptf_id
 WHERE {{WHERE}};
 
 -- @partner

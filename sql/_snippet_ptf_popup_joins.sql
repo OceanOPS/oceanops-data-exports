@@ -1,0 +1,24 @@
+-- Shared GeoJSON popup fields (platform inspect spec).
+-- Do not use property name `category` for family — that slot is the map layer key.
+--
+-- Properties (inside jsonb_build_object):
+--   'ptf_family_name', pf.name,
+--   'goos_networks', goos.goos_networks
+--
+-- JOINs (after rv / sp joins on alias `t` with ptf_id):
+--
+-- LEFT JOIN oceanops.ptf p ON p.id = t.ptf_id
+-- LEFT JOIN oceanops.ptf_model pm ON pm.id = p.ptf_model_id
+-- LEFT JOIN oceanops.ptf_type pt ON pt.id = pm.ptf_type_id
+-- LEFT JOIN oceanops.ptf_family pf ON pf.id = pt.ptf_family_id
+-- LEFT JOIN (
+--   SELECT
+--     network_ptf.ptf_id,
+--     string_agg(DISTINCT network.name_short, ', ' ORDER BY network.name_short) AS goos_networks
+--   FROM oceanops.network_ptf
+--   JOIN oceanops.network ON network_ptf.network_id = network.id
+--   WHERE network.goos
+--   GROUP BY network_ptf.ptf_id
+-- ) goos ON goos.ptf_id = t.ptf_id
+--
+-- GO-SHIP / OceanTraX lines: keep INSPECT_PLATFORM_TYPE labels in the map (no ptf_id on line features).
