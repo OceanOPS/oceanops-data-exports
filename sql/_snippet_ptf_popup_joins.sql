@@ -2,12 +2,14 @@
 -- Do not use property name `category` for family — that slot is the map layer key.
 --
 -- Properties (inside jsonb_build_object):
+--   'wigos_ref', pi.wigos_ref,
 --   'ptf_family_name', pf.name,
 --   'goos_networks', goos.goos_networks
 --
 -- JOINs (after rv / sp joins on alias `t` with ptf_id):
 --
 -- LEFT JOIN oceanops.ptf p ON p.id = t.ptf_id
+-- LEFT JOIN oceanops.ptf_identifiers pi ON pi.id = p.ptf_identifiers_id
 -- LEFT JOIN oceanops.ptf_model pm ON pm.id = p.ptf_model_id
 -- LEFT JOIN oceanops.ptf_type pt ON pt.id = pm.ptf_type_id
 -- LEFT JOIN oceanops.ptf_family pf ON pf.id = pt.ptf_family_id

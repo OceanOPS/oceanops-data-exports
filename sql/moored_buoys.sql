@@ -24,6 +24,7 @@ SELECT jsonb_build_object(
         'category', 'moored_buoys',
         'ptf_id', t.ptf_id,
         'ptf_ref', t.ptf_ref,
+        'wigos_ref', pi.wigos_ref,
         'ptf_model', t.ptf_model,
         'country_name', t.country,
         'country_iso_reporting', {{PARTNER_COUNTRY_ISO:t.country_iso_code2}},
@@ -48,6 +49,7 @@ LEFT JOIN (
   GROUP BY ptf_id
 ) sp ON t.ptf_id = sp.ptf_id
 LEFT JOIN oceanops.ptf p ON p.id = t.ptf_id
+LEFT JOIN oceanops.ptf_identifiers pi ON pi.id = p.ptf_identifiers_id
 LEFT JOIN oceanops.ptf_model pm ON pm.id = p.ptf_model_id
 LEFT JOIN oceanops.ptf_type pt ON pt.id = pm.ptf_type_id
 LEFT JOIN oceanops.ptf_family pf ON pf.id = pt.ptf_family_id
