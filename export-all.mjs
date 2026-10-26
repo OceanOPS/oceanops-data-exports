@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 /**
- * Partner + GeoJSON exports with one combined summary at the end.
+ * Report card edition pipeline (single command before deploy):
+ *   1. partner countries → report-card TS + simple-map JSON
+ *   2. GeoJSON map layers → simple-map public/geojson
+ *   3. observations per day → report-card headline stats
+ *
+ * Does NOT run export:goos-tier-counts (editorial tier totals — separate, optional).
  */
 import { loadDotEnv } from './databaseUrl.mjs'
 import { runGeojsonExport } from './export-geojson.mjs'

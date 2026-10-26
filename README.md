@@ -50,8 +50,10 @@ npm run export:geojson -- --geojson-dir=/path/to/public/geojson
 |--------|-------------|
 | `npm run export:partners` | Partner counts → report-card TS + simple-map JSON |
 | `npm run export:geojson` | Map layers → `oceanops-simple-map/public/geojson/` |
-| `npm run export:all` | Both exports + one combined summary (counts, filters for map + partners) |
+| `npm run export:all` | **Report card pipeline:** partners + GeoJSON + observations/day + combined summary |
 | `npm run export:all:dry-run` | Same as `export:all` without writing TS/JSON/GeoJSON files |
+| `npm run export:goos-tier-counts` | **Optional (not in export:all):** editorial tier totals → `rendered/goos-tier-counts.{json,txt}` — run after `export:all` when team need them |
+| `npm run export:goos-tier-counts:geojson-only` | Tier totals from existing GeoJSON only (no MBN tropical/coastal DB split) |
 | `npm run render:sql -- <file\|all\|geojson\|partners>` | Print SQL with edition values (pgAdmin) |
 | `*:dry-run` | Print SQL or preview without writing files |
 

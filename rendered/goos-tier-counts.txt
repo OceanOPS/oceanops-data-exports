@@ -1,0 +1,30 @@
+1. TOTAL PLATFORMS — GLOBAL ARRAYS
+Subtotal (platforms): 7381
+
+  Profiling floats – Argo: 4443
+  Ship based meteorological – VOS: 1495
+  Drifting buoys – GDA: 1387
+  Tropical moored buoys – MBN subcomponent: 56
+    (OPERATIONAL on map + network_id 1000340)
+
+2. TOTAL REFERENCE OBSERVATORIES
+Subtotal (referenceObservatories): 932
+
+  Time series sites – OceanSITES: 342
+  Sea level gauges – GLOSS: 173
+  Repeated transects – GO-SHIP: 53
+  Surface ocean CO₂ – SOCONET (emerging): 342
+  Ship based oceanographic – OceanTraX (subsurface): 22
+
+3. TOTAL PLATFORMS — REGIONAL AND EMERGING SYSTEMS
+Subtotal (platforms): 1767
+
+  Gliders – OceanGliders: 305
+  Coastal / national moored buoys – MBN subcomponent: 349
+    (OPERATIONAL on map + network_id 1000321)
+  Animal borne sensors – AniBOS: 53
+  High Frequency radars – HF Radar: 410
+  Tsunami buoys – TSU: 37
+  Ship based aerological – ASAP: 13
+  Fishing vessels – FVON (emerging): 600
+

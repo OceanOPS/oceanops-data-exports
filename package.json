@@ -26,6 +26,8 @@
     "render:sql": "node render-sql.mjs",
     "export:all": "node export-all.mjs",
     "export:all:dry-run": "node export-all.mjs --dry-run",
+    "export:goos-tier-counts": "node export-goos-tier-counts.mjs --json-out=rendered/goos-tier-counts.json --txt-out=rendered/goos-tier-counts.txt",
+    "export:goos-tier-counts:geojson-only": "node export-goos-tier-counts.mjs --geojson-only --json-out=rendered/goos-tier-counts.json --txt-out=rendered/goos-tier-counts.txt",
     "densify:geojson": "node densify-geojson.mjs"
   },
   "engines": {
