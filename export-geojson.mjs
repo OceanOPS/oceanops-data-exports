@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url'
 import { formatDatabaseUrlForLog, loadDotEnv } from './databaseUrl.mjs'
 import { buildExportMetadata, patchExportMetadata } from './editionMetadata.mjs'
 import { setExportAsOfDate, resolveExportAsOfDate } from './editionValues.mjs'
-import { assertPsqlAvailable, runPsqlQuery } from './geojson-export/db.mjs'
+import { assertPsqlAvailable, runPsqlGeoJsonQuery } from './geojson-export/db.mjs'
 
 loadDotEnv()
 import { densifyFeatureCollection } from './geojson-export/densifyLayer.mjs'
@@ -104,7 +104,7 @@ async function exportLayer(layerId, opts) {
     return { layerId, featureCount: 0, written: [], lineStyle: null }
   }
 
-  const result = runPsqlQuery(sql)
+  const result = runPsqlGeoJsonQuery(sql)
   if (!result.ok) {
     throw new Error(`Export failed for "${layerId}": ${result.error}`)
   }

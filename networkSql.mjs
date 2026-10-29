@@ -129,7 +129,22 @@ export function renderNetworkSqlSection(filePath, section) {
     body = renderPartnerCountryIsoTokens(body)
   }
 
-  return renderEditionSql(body)
+  body = renderEditionSql(body)
+  if (section === 'geojson') {
+    body = castGeometryForStAsGeoJSON(body)
+  }
+  return body
+}
+
+/**
+ * isival-prod: shapes are postgis.geometry; PostGIS functions live in schema postgis (not public.geometry).
+ * @param {string} sql
+ */
+export function castGeometryForStAsGeoJSON(sql) {
+  return sql.replace(
+    /ST_AsGeoJSON\(\s*([a-zA-Z0-9_.]+)(?:\s*::geometry)?\s*\)::jsonb/gi,
+    'postgis.ST_AsGeoJSON($1)::jsonb',
+  )
 }
 
 /** @param {string} sql */
@@ -236,6 +251,7 @@ export function renderNetworkSqlFileForPgAdmin(filePath) {
 
   geojson = renderPartnerCountryIsoTokens(geojson)
   geojson = renderEditionSql(geojson)
+  geojson = castGeometryForStAsGeoJSON(geojson)
   partner = renderPartnerCountryIsoTokens(partner)
   partner = renderEditionSql(partner)
 

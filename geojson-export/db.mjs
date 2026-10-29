@@ -17,6 +17,9 @@ loadDotEnv()
 
 export { formatDatabaseUrlForLog, loadDotEnv, parseDatabaseUrl, resolveDatabaseUrl }
 
+/** Match OceanOPS GIS routines (postgis schema, oceanops_gis views). */
+const PSQL_GEOJSON_SESSION = `SET search_path TO oceanops, oceanops_gis, public, postgis;`
+
 /**
  * @param {string} sql
  * @returns {{ ok: true, stdout: string } | { ok: false, error: string }}
@@ -70,6 +73,14 @@ export function runPsqlQuery(sql) {
   } finally {
     rmSync(tmpDir, { recursive: true, force: true })
   }
+}
+
+/**
+ * GeoJSON layer queries (PostGIS in schema `postgis` on isival-prod).
+ * @param {string} sql
+ */
+export function runPsqlGeoJsonQuery(sql) {
+  return runPsqlQuery(`${PSQL_GEOJSON_SESSION}\n${sql}`)
 }
 
 /** @returns {boolean} */

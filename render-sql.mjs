@@ -14,10 +14,19 @@ import {
 const repoRoot = path.dirname(fileURLToPath(import.meta.url))
 
 function resolveSqlPath(inputPath) {
-  if (fs.existsSync(inputPath)) return path.resolve(inputPath)
-  const fromRoot = path.join(repoRoot, inputPath)
-  if (fs.existsSync(fromRoot)) return fromRoot
-  throw new Error(`SQL file not found: ${inputPath}`)
+  const candidates = [
+    inputPath,
+    path.join(repoRoot, inputPath),
+    path.join(NETWORK_SQL_DIR, inputPath),
+    path.join(NETWORK_SQL_DIR, `${inputPath}.sql`),
+    path.join(repoRoot, 'sql', `${inputPath}.sql`),
+  ]
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) return path.resolve(candidate)
+  }
+  throw new Error(
+    `SQL file not found: ${inputPath} (try sql/${inputPath}.sql or a layer id like vos)`,
+  )
 }
 
 /**
@@ -49,9 +58,10 @@ const arg = process.argv[2]
 if (!arg) {
   process.stderr.write(`Usage:
   npm run render:sql -- sql/argo.sql
-  npm run render:sql -- all          # @geojson + @partner (@where inlined)
-  npm run render:sql -- geojson      # map queries only
-  npm run render:sql -- partners     # partner count queries only
+  npm run render:sql -- vos            # shorthand → sql/vos.sql
+  npm run render:sql -- all            # @geojson + @partner (@where inlined)
+  npm run render:sql -- geojson        # map queries only
+  npm run render:sql -- partners       # partner count queries only
 `)
   process.exit(1)
 }
