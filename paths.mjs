@@ -74,6 +74,10 @@ export function resolveExportPaths(argv = []) {
   const GEOJSON_OUTPUT_DIR = path.resolve(
     geojsonDirRaw ?? path.join(SIMPLE_MAP_ROOT, 'public/geojson'),
   )
+  const GOOS_TIER_COUNTS_TS = path.resolve(
+    REPORT_CARD_ROOT,
+    'src/data/goosTierCounts.ts',
+  )
 
   return {
     REPORT_CARD_ROOT,
@@ -81,6 +85,7 @@ export function resolveExportPaths(argv = []) {
     PARTNER_COUNTRIES_TS,
     PARTNER_COUNTRIES_JSON,
     GEOJSON_OUTPUT_DIR,
+    GOOS_TIER_COUNTS_TS,
     partnerTsExplicit: Boolean(partnerTsRaw),
     partnerJsonExplicit: Boolean(partnerJsonRaw),
     geojsonDirExplicit: Boolean(geojsonDirRaw),

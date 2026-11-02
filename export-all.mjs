@@ -4,15 +4,20 @@
  *   1. partner countries → report-card TS + simple-map JSON
  *   2. GeoJSON map layers → simple-map public/geojson
  *   3. observations per day → report-card headline stats
- *
- * Does NOT run export:goos-tier-counts (editorial tier totals — separate, optional).
+ *   4. GOOS tier subtotals → report-card learn-more accordion counts
  */
 import { loadDotEnv } from './databaseUrl.mjs'
 import { runGeojsonExport } from './export-geojson.mjs'
+import {
+  referenceObservatoriesTotalFromPartner,
+  runGoosTierCountsExport,
+  writeReportCardTierCountsTs,
+} from './export-goos-tier-counts.mjs'
 import { runObservationsExport } from './export-observations-per-day.mjs'
 import { runPartnerExport } from './export-partner-countries.mjs'
 import { printCombinedExportSummary } from './exportSummary.mjs'
 import { EXPORT_EDITION_LABEL } from './partner-export/exportConfig.mjs'
+import { resolveExportPaths } from './paths.mjs'
 
 loadDotEnv()
 
@@ -22,6 +27,12 @@ try {
   const { byNetwork } = await runPartnerExport(argv, { noSummary: true })
   const { countsByLayer, lineStyleByLayer } = await runGeojsonExport(argv, { noSummary: true })
   const obsStats = await runObservationsExport(argv)
+  const exportPaths = resolveExportPaths(argv)
+  const tierReport = await runGoosTierCountsExport(argv)
+  writeReportCardTierCountsTs(tierReport, exportPaths.GOOS_TIER_COUNTS_TS, {
+    referenceObservatories: referenceObservatoriesTotalFromPartner(byNetwork),
+  })
+  process.stderr.write(`Wrote ${exportPaths.GOOS_TIER_COUNTS_TS}\n`)
   printCombinedExportSummary(byNetwork, countsByLayer, lineStyleByLayer, {
     EXPORT_EDITION_LABEL,
     obsStats,

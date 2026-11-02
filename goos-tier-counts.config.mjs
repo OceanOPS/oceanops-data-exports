@@ -51,7 +51,7 @@ export const GOOS_TIER_GROUPS = [
       { id: 'oceangliders', label: 'Gliders – OceanGliders', layerIds: ['oceangliders'] },
       {
         id: 'mbnCoastal',
-        label: 'Coastal / national moored buoys – MBN subcomponent',
+        label: 'Coastal / national moored buoys – MBN subcomponent (operational MBN not in GTMBA)',
         dbOnly: true,
       },
       { id: 'anibos', label: 'Animal borne sensors – AniBOS', layerIds: ['anibos'] },

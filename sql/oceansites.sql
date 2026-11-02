@@ -52,7 +52,8 @@ SELECT jsonb_build_object(
         'country_ship', rv.ship_country,
         'country_sensor_provider', sp.sensor_country,
         'ptf_family_name', pf.name,
-        'goos_networks', goos.goos_networks
+        'goos_networks', goos.goos_networks,
+        'site_names', site.site_names
       )
     )
     ORDER BY t.ptf_ref
@@ -84,6 +85,14 @@ LEFT JOIN (
   WHERE network.goos
   GROUP BY network_ptf.ptf_id
 ) goos ON goos.ptf_id = t.ptf_id
+LEFT JOIN (
+  SELECT
+    site_ptf.ptf_id,
+    string_agg(DISTINCT site.name, ', ' ORDER BY site.name) AS site_names
+  FROM oceanops.site_ptf
+  JOIN oceanops.site ON site.id = site_ptf.site_id
+  GROUP BY site_ptf.ptf_id
+) site ON site.ptf_id = t.ptf_id
 WHERE t.rn = 1
   AND t.shape IS NOT NULL;
 

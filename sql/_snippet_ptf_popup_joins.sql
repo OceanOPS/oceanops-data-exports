@@ -5,6 +5,7 @@
 --   'wigos_ref', pi.wigos_ref,
 --   'ptf_family_name', pf.name,
 --   'goos_networks', goos.goos_networks
+--   'site_names', site.site_names   -- OceanSITES: reference observatory name(s)
 --
 -- JOINs (after rv / sp joins on alias `t` with ptf_id):
 --

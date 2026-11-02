@@ -31,7 +31,14 @@ SELECT jsonb_build_object(
         'country_ship', rv.ship_country,
         'country_sensor_provider', sp.sensor_country,
         'ptf_family_name', pf.name,
-        'goos_networks', goos.goos_networks
+        'goos_networks', goos.goos_networks,
+        'mbn_goos_tier', CASE
+          WHEN EXISTS (
+            SELECT 1 FROM oceanops.network_ptf np
+            WHERE np.ptf_id = t.ptf_id AND np.network_id = 1000340
+          ) THEN 'tropical'
+          ELSE 'coastal'
+        END
       )
     )
   ), '[]'::jsonb)

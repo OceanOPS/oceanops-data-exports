@@ -1,0 +1,198 @@
+{
+  "asOf": "2026-11-02",
+  "geojsonDir": "/Users/tmignon/Documents/OceanOPS/oceanops-simple-map/public/geojson",
+  "layerCounts": {
+    "argo": 4433,
+    "vos": 1493,
+    "drifting_buoys": 1413,
+    "oceansites": 342,
+    "gloss": 173,
+    "goship": 53,
+    "soconet": 297,
+    "soconet_moorings": 45,
+    "oceantrax": 22,
+    "oceangliders": 295,
+    "anibos": 53,
+    "hf_radars": 410,
+    "tsunami_buoys": 36,
+    "asap": 15,
+    "fvon": 607
+  },
+  "mbn": {
+    "tropical": 0,
+    "coastal": 0
+  },
+  "groups": [
+    {
+      "id": "globalArrays",
+      "title": "Total platforms — global arrays",
+      "kind": "platforms",
+      "subtotal": 7339,
+      "lines": [
+        {
+          "id": "argo",
+          "label": "Profiling floats – Argo",
+          "count": 4433,
+          "layerIds": [
+            "argo"
+          ],
+          "geometryKind": "point"
+        },
+        {
+          "id": "vos",
+          "label": "Ship based meteorological – VOS",
+          "count": 1493,
+          "layerIds": [
+            "vos"
+          ],
+          "geometryKind": "point"
+        },
+        {
+          "id": "gda",
+          "label": "Drifting buoys – GDA",
+          "count": 1413,
+          "layerIds": [
+            "drifting_buoys"
+          ],
+          "geometryKind": "point"
+        },
+        {
+          "id": "mbnTropical",
+          "label": "Tropical moored buoys – MBN subcomponent",
+          "count": 0
+        }
+      ]
+    },
+    {
+      "id": "referenceObservatories",
+      "title": "Total reference observatories",
+      "kind": "referenceObservatories",
+      "subtotal": 932,
+      "lines": [
+        {
+          "id": "oceansites",
+          "label": "Time series sites – OceanSITES",
+          "count": 342,
+          "layerIds": [
+            "oceansites"
+          ],
+          "geometryKind": "point"
+        },
+        {
+          "id": "gloss",
+          "label": "Sea level gauges – GLOSS",
+          "count": 173,
+          "layerIds": [
+            "gloss"
+          ],
+          "geometryKind": "point"
+        },
+        {
+          "id": "goship",
+          "label": "Repeated transects – GO-SHIP",
+          "count": 53,
+          "layerIds": [
+            "goship"
+          ],
+          "geometryKind": "line"
+        },
+        {
+          "id": "soconet",
+          "label": "Surface ocean CO₂ – SOCONET (emerging)",
+          "count": 342,
+          "layerIds": [
+            "soconet",
+            "soconet_moorings"
+          ],
+          "geometryKind": "point"
+        },
+        {
+          "id": "oceantrax",
+          "label": "Ship based oceanographic – OceanTraX (subsurface)",
+          "count": 22,
+          "layerIds": [
+            "oceantrax"
+          ],
+          "geometryKind": "line"
+        }
+      ]
+    },
+    {
+      "id": "regionalEmerging",
+      "title": "Total platforms — regional and emerging systems",
+      "kind": "platforms",
+      "subtotal": 1416,
+      "lines": [
+        {
+          "id": "oceangliders",
+          "label": "Gliders – OceanGliders",
+          "count": 295,
+          "layerIds": [
+            "oceangliders"
+          ],
+          "geometryKind": "point"
+        },
+        {
+          "id": "mbnCoastal",
+          "label": "Coastal / national moored buoys – MBN subcomponent",
+          "count": 0
+        },
+        {
+          "id": "anibos",
+          "label": "Animal borne sensors – AniBOS",
+          "count": 53,
+          "layerIds": [
+            "anibos"
+          ],
+          "geometryKind": "point"
+        },
+        {
+          "id": "hfRadars",
+          "label": "High Frequency radars – HF Radar",
+          "count": 410,
+          "layerIds": [
+            "hf_radars"
+          ],
+          "geometryKind": "point"
+        },
+        {
+          "id": "tsunami",
+          "label": "Tsunami buoys – TSU",
+          "count": 36,
+          "layerIds": [
+            "tsunami_buoys"
+          ],
+          "geometryKind": "point"
+        },
+        {
+          "id": "asap",
+          "label": "Ship based aerological – ASAP",
+          "count": 15,
+          "layerIds": [
+            "asap"
+          ],
+          "geometryKind": "point"
+        },
+        {
+          "id": "fvon",
+          "label": "Fishing vessels – FVON (emerging)",
+          "count": 607,
+          "layerIds": [
+            "fvon"
+          ],
+          "geometryKind": "point"
+        },
+        {
+          "id": "sunFleet",
+          "label": "Surface UNcrewed Fleet – SUN Fleet (emerging)",
+          "count": null
+        },
+        {
+          "id": "smartCables",
+          "label": "SMART subsea cables (emerging)",
+          "count": null
+        }
+      ]
+    }
+  ]
+}
