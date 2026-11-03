@@ -12,9 +12,21 @@ AND g.line_status = 'active'
 
 -- @geojson
 WITH design_lines AS (
-  SELECT g.line_id, g.name, g.shape, g.line_status
+  SELECT g.line_id, g.name, g.shape, g.line_status, g.programs
   FROM oceanops_gis.soop_xbt_design_2023_2024 AS g
   WHERE {{WHERE}}
+),
+line_operated_countries AS (
+  SELECT
+    d.line_id,
+    string_agg(DISTINCT co.name, ', ' ORDER BY co.name) AS operated_by_countries
+  FROM design_lines d
+  CROSS JOIN LATERAL string_to_table(d.programs, ',') AS prog(program)
+  JOIN oceanops.program p ON p.name = TRIM(prog.program)
+  JOIN oceanops.country co ON co.id = p.country_id
+  WHERE NULLIF(TRIM(d.programs), '') IS NOT NULL
+    AND NULLIF(TRIM(prog.program), '') IS NOT NULL
+  GROUP BY d.line_id
 ),
 cruise_lead_country AS (
   SELECT
@@ -168,6 +180,7 @@ SELECT jsonb_build_object(
             END
         END,
         'edition_country_codes', COALESCE(lec.country_codes, ''),
+        'operated_by_countries', COALESCE(NULLIF(TRIM(lob.operated_by_countries), ''), ''),
         'edition_cruises', COALESCE(ec.edition_cruises, '[]'::jsonb)::text,
         'edition_status', CASE
           WHEN es.line_id IS NOT NULL THEN 'Sampled since ' || to_char(DATE '{{SOOP_XBT_SAMPLED_SINCE}}', 'YYYY')
@@ -186,6 +199,7 @@ LEFT JOIN next_cruise nc ON nc.line_id = d.line_id
 LEFT JOIN latest_cruise_countries lcc ON lcc.line_id = d.line_id
 LEFT JOIN next_cruise_countries ncc ON ncc.line_id = d.line_id
 LEFT JOIN line_edition_countries lec ON lec.line_id = d.line_id
+LEFT JOIN line_operated_countries lob ON lob.line_id = d.line_id
 LEFT JOIN edition_cruises ec ON ec.line_id = d.line_id;
 
 -- @partner
