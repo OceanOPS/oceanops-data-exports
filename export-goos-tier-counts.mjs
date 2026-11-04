@@ -341,7 +341,15 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error(err instanceof Error ? err.message : err)
-  process.exit(1)
-})
+function isDirectRun() {
+  const entry = process.argv[1]
+  if (!entry) return false
+  return path.resolve(entry) === path.resolve(fileURLToPath(import.meta.url))
+}
+
+if (isDirectRun()) {
+  main().catch((err) => {
+    console.error(err instanceof Error ? err.message : err)
+    process.exit(1)
+  })
+}

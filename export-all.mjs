@@ -4,7 +4,7 @@
  *   1. partner countries → report-card TS + simple-map JSON
  *   2. GeoJSON map layers → simple-map public/geojson
  *   3. observations per day → report-card headline stats
- *   4. GOOS tier subtotals → report-card learn-more accordion counts
+ *   4. GOOS tier subtotals → goosTierCounts.ts (after GeoJSON; reference obs = partner roll-up)
  */
 import { loadDotEnv } from './databaseUrl.mjs'
 import { runGeojsonExport } from './export-geojson.mjs'
@@ -29,10 +29,13 @@ try {
   const obsStats = await runObservationsExport(argv)
   const exportPaths = resolveExportPaths(argv)
   const tierReport = await runGoosTierCountsExport(argv)
+  const referenceObservatories = referenceObservatoriesTotalFromPartner(byNetwork)
   writeReportCardTierCountsTs(tierReport, exportPaths.GOOS_TIER_COUNTS_TS, {
-    referenceObservatories: referenceObservatoriesTotalFromPartner(byNetwork),
+    referenceObservatories,
   })
-  process.stderr.write(`Wrote ${exportPaths.GOOS_TIER_COUNTS_TS}\n`)
+  process.stderr.write(
+    `Wrote ${exportPaths.GOOS_TIER_COUNTS_TS} (referenceObservatories=${referenceObservatories}, geojson tier report=${tierReport.groups.find((g) => g.id === 'referenceObservatories')?.subtotal})\n`,
+  )
   printCombinedExportSummary(byNetwork, countsByLayer, lineStyleByLayer, {
     EXPORT_EDITION_LABEL,
     obsStats,

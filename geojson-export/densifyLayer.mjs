@@ -166,8 +166,97 @@ function densifyLineString(coords, options) {
 }
 
 /**
- * Split a densified line at antimeridian jumps so 3D dashed line symbols
- * do not draw straight chords over the pole (path tubes tolerate the jump).
+ * Subdivide any remaining edge longer than `maxKm` (polar / great-circle edge cases).
+ *
+ * @param {number[][]} coords
+ * @param {number} maxKm
+ * @param {{ mode?: DensifyMode, stepKm?: number }} options
+ */
+function capSegmentLength(coords, maxKm, options) {
+  if (!coords || coords.length < 2) return coords ?? []
+
+  /** @type {[number, number][]} */
+  const out = [[normalizeLon(coords[0][0]), coords[0][1]]]
+
+  for (let i = 1; i < coords.length; i++) {
+    let a = out[out.length - 1]
+    let b = [normalizeLon(coords[i][0]), coords[i][1]]
+
+    for (;;) {
+      const dist = turf.distance(a, b, { units: 'kilometers' })
+      if (dist <= maxKm) {
+        out.push(b)
+        break
+      }
+      const inserted = densifyPair(a, b, {
+        mode: options.mode ?? 'hybrid',
+        stepKm: Math.min(options.stepKm ?? 80, maxKm * 0.45),
+      })
+      if (inserted.length === 0) {
+        out.push(b)
+        break
+      }
+      for (const p of inserted.slice(0, -1)) out.push(p)
+      a = out[out.length - 1]
+    }
+  }
+
+  return out
+}
+
+/**
+ * Join MultiLineString parts split at ±180° into one chain with continuous longitude
+ * (e.g. 179°E → −181° after −180°) so 3D path tubes do not leave a visible gap.
+ *
+ * @param {number[][][]} parts
+ * @returns {number[][]}
+ */
+export function stitchMultilineAcrossDateline(parts) {
+  if (!parts?.length) return []
+  /** @type {number[][]} */
+  let out = parts[0].map((c) => [normalizeLon(c[0]), c[1]])
+  for (let i = 1; i < parts.length; i++) {
+    const part = parts[i]
+    if (!part.length) continue
+    const end = out[out.length - 1]
+    let lon = normalizeLon(part[0][0])
+    const lat = part[0][1]
+    if (isDatelineContinuation(end, [lon, lat]) || Math.abs(lon - end[0]) > 180) {
+      if (end[0] < 0 && lon > 0) lon -= 360
+      else if (end[0] > 0 && lon < 0) lon += 360
+    }
+    out.push([lon, lat])
+    for (let k = 1; k < part.length; k++) {
+      out.push([normalizeLon(part[k][0]), part[k][1]])
+    }
+  }
+  return unwrapLongitudeContinuity(out)
+}
+
+/**
+ * Remove ±360° jumps between consecutive vertices (post-densify / post-stitch).
+ *
+ * @param {number[][]} coords
+ * @returns {number[][]}
+ */
+export function unwrapLongitudeContinuity(coords) {
+  if (!coords || coords.length < 2) return coords ?? []
+  /** @type {number[][]} */
+  const out = [[coords[0][0], coords[0][1]]]
+  for (let i = 1; i < coords.length; i++) {
+    let lon = normalizeLon(coords[i][0])
+    const lat = coords[i][1]
+    const prevLon = out[out.length - 1][0]
+    const dlon = lon - prevLon
+    if (dlon > 180) lon -= 360
+    else if (dlon < -180) lon += 360
+    out.push([lon, lat])
+  }
+  return out
+}
+
+/**
+ * Split a densified line at antimeridian jumps (legacy / flat-map workflows).
  *
  * @param {number[][]} coords
  * @returns {number[][][]}
@@ -215,7 +304,8 @@ function pushLineFeature(out, parts, props) {
  */
 export function densifyFeatureCollection(collection, options = {}) {
   const mode = options.mode ?? 'hybrid'
-  const stepKm = options.stepKm ?? 80
+  const stepKm = options.stepKm ?? 50
+  const maxSegmentKm = options.maxSegmentKm ?? stepKm * 1.05
   const out = { type: 'FeatureCollection', features: [] }
 
   for (const feature of collection.features ?? []) {
@@ -224,19 +314,19 @@ export function densifyFeatureCollection(collection, options = {}) {
     if (!geometry) continue
 
     if (geometry.type === 'LineString') {
-      const coords = densifyLineString(geometry.coordinates, { mode, stepKm })
-      pushLineFeature(out, splitAtAntimeridian(coords), props)
+      let coords = densifyLineString(geometry.coordinates, { mode, stepKm })
+      coords = capSegmentLength(coords, maxSegmentKm, { mode, stepKm })
+      coords = unwrapLongitudeContinuity(coords)
+      pushLineFeature(out, [coords], props)
       continue
     }
 
     if (geometry.type === 'MultiLineString') {
-      /** @type {number[][][]} */
-      const parts = []
-      for (const part of geometry.coordinates) {
-        const coords = densifyLineString(part, { mode, stepKm })
-        parts.push(...splitAtAntimeridian(coords))
-      }
-      pushLineFeature(out, parts, props)
+      const stitched = stitchMultilineAcrossDateline(geometry.coordinates)
+      let coords = densifyLineString(stitched, { mode, stepKm })
+      coords = capSegmentLength(coords, maxSegmentKm, { mode, stepKm })
+      coords = unwrapLongitudeContinuity(coords)
+      pushLineFeature(out, [coords], props)
       continue
     }
 
