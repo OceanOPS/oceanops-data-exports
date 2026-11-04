@@ -116,8 +116,19 @@ function readExistingMetadata(filePath) {
   return meta
 }
 
-/** @param {Map<string, Record<string, number>>} countries @param {Record<string, { name?: string, countryCode?: string, description?: string }>} meta @param {number} contributingCountries */
-function renderPartnerCountries(countries, meta, contributingCountries) {
+/** DB-wide totals for networks whose per-country counts overlap (one line, several operating countries). */
+function fetchNetworkLegendTotals() {
+  /** @type {Record<string, number>} */
+  const networkLegendTotals = {}
+  const oceantraxActiveLines = fetchOceanTraXActiveLineCount()
+  if (oceantraxActiveLines != null) {
+    networkLegendTotals.oceantrax = oceantraxActiveLines
+  }
+  return networkLegendTotals
+}
+
+/** @param {Map<string, Record<string, number>>} countries @param {Record<string, { name?: string, countryCode?: string, description?: string }>} meta @param {number} contributingCountries @param {Record<string, number>} networkLegendTotals */
+function renderPartnerCountries(countries, meta, contributingCountries, networkLegendTotals) {
   const generatedAt = new Date().toISOString().slice(0, 10)
 
   const sortedCodes = [...countries.keys()].sort((a, b) => {
@@ -195,11 +206,17 @@ ${entries.join(',\n')}
 
 /** Globe/report filter countries (rollup + whitelist). Matches simple-map getFilterableCountryNames. */
 export const CONTRIBUTING_COUNTRIES = ${contributingCountries}
+
+/**
+ * Global totals that replace the sum over countries (OceanTraX lines run by several countries
+ * appear once per country). Matches simple-map networkLegendTotals.
+ */
+export const NETWORK_GLOBAL_TOTALS: Partial<Record<keyof CountryNetworks, number>> = ${JSON.stringify(networkLegendTotals)}
 `
 }
 
-/** @param {Map<string, Record<string, number>>} countries @param {Record<string, { name?: string, countryCode?: string, description?: string }>} meta @param {number} contributingCountries */
-function renderPartnerCountriesJson(countries, meta, contributingCountries) {
+/** @param {Map<string, Record<string, number>>} countries @param {Record<string, { name?: string, countryCode?: string, description?: string }>} meta @param {number} contributingCountries @param {Record<string, number>} networkLegendTotals */
+function renderPartnerCountriesJson(countries, meta, contributingCountries, networkLegendTotals) {
   const generatedAt = new Date().toISOString().slice(0, 10)
 
   const sortedCodes = [...countries.keys()].sort((a, b) => {
@@ -225,13 +242,6 @@ function renderPartnerCountriesJson(countries, meta, contributingCountries) {
       ),
     }
   })
-
-  /** @type {Record<string, number>} */
-  const networkLegendTotals = {}
-  const oceantraxActiveLines = fetchOceanTraXActiveLineCount()
-  if (oceantraxActiveLines != null) {
-    networkLegendTotals.oceantrax = oceantraxActiveLines
-  }
 
   return {
     generatedAt,
@@ -293,8 +303,14 @@ export async function runPartnerExport(argv = process.argv.slice(2), options = {
   }
 
   const contributingCountries = countContributingCountries(countries)
-  const output = renderPartnerCountries(countries, meta, contributingCountries)
-  const outputJson = renderPartnerCountriesJson(countries, meta, contributingCountries)
+  const networkLegendTotals = fetchNetworkLegendTotals()
+  const output = renderPartnerCountries(countries, meta, contributingCountries, networkLegendTotals)
+  const outputJson = renderPartnerCountriesJson(
+    countries,
+    meta,
+    contributingCountries,
+    networkLegendTotals,
+  )
 
   if (dryRun) {
     process.stdout.write(output)
@@ -303,7 +319,7 @@ export async function runPartnerExport(argv = process.argv.slice(2), options = {
     if (!noSummary) {
       printExportCriteriaSummary(byNetwork, { EXPORT_EDITION_LABEL })
     }
-    return { byNetwork, countries, meta, contributingCountries }
+    return { byNetwork, countries, meta, contributingCountries, networkLegendTotals }
   }
 
   const contributingIsos = listContributingCountryIsos(countries)
@@ -326,7 +342,7 @@ export async function runPartnerExport(argv = process.argv.slice(2), options = {
     printExportCriteriaSummary(byNetwork, { EXPORT_EDITION_LABEL })
   }
 
-  return { byNetwork, countries, contributingCountries }
+  return { byNetwork, countries, contributingCountries, networkLegendTotals }
 }
 
 /**

@@ -160,10 +160,18 @@ export const REFERENCE_OBSERVATORY_PARTNER_KEYS = [
   'oceantrax',
 ]
 
-/** @param {Record<string, Record<string, number>>} byNetwork */
-export function referenceObservatoriesTotalFromPartner(byNetwork) {
+/**
+ * @param {Record<string, Record<string, number>>} byNetwork
+ * @param {Record<string, number>} [networkLegendTotals] DB-wide totals for networks shared across countries
+ */
+export function referenceObservatoriesTotalFromPartner(byNetwork, networkLegendTotals = {}) {
   let total = 0
   for (const key of REFERENCE_OBSERVATORY_PARTNER_KEYS) {
+    const globalTotal = networkLegendTotals[key]
+    if (typeof globalTotal === 'number') {
+      total += globalTotal
+      continue
+    }
     const byCountry = byNetwork[key]
     if (!byCountry) continue
     for (const count of Object.values(byCountry)) {

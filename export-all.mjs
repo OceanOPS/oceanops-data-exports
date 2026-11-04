@@ -24,12 +24,12 @@ loadDotEnv()
 const argv = process.argv.slice(2)
 
 try {
-  const { byNetwork } = await runPartnerExport(argv, { noSummary: true })
+  const { byNetwork, networkLegendTotals } = await runPartnerExport(argv, { noSummary: true })
   const { countsByLayer, lineStyleByLayer } = await runGeojsonExport(argv, { noSummary: true })
   const obsStats = await runObservationsExport(argv)
   const exportPaths = resolveExportPaths(argv)
   const tierReport = await runGoosTierCountsExport(argv)
-  const referenceObservatories = referenceObservatoriesTotalFromPartner(byNetwork)
+  const referenceObservatories = referenceObservatoriesTotalFromPartner(byNetwork, networkLegendTotals)
   writeReportCardTierCountsTs(tierReport, exportPaths.GOOS_TIER_COUNTS_TS, {
     referenceObservatories,
   })
